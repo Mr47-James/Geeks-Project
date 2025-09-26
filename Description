@@ -1,0 +1,120 @@
+Description: The Following Project is a Music Manager
+1. Features:
+    - Add Music:
+    - Edit Music:
+    - Delete Music:
+    - View Music:
+    - Search Music:
+    - Filter Music:
+    - Sort Music:
+    - Pagination:
+    - User Authentication:
+    - User Authorization:
+    - User Profile:
+    - User Settings:
+    - User History:
+    - User Notifications:
+    - User Recommendations:
+    - User Reviews:
+    - User Ratings:
+    - User Playlists:
+    - User Behaviour Analytics:
+    - User Taste Profiling:
+    - User Personalization:
+    - User Onboarding:
+    - User Engagement:
+    - User Retention:
+    - User Churn:
+    - User Lifetime Value:
+    - User Acquisition:
+    - User Activation:
+    - User Conversion:
+    - User Funnel Analysis:
+    - User Cohort Analysis:
+    - User Segmentation:
+    - User Journey Mapping:
+    - User Experience Mapping:
+    - User Feedback:
+    - User Testing:
+2. The main used  lIbraries:
+    - Flask
+    - Flask-SQLAlchemy
+    - psycopg2-binary
+    - acyncio
+    - numpy
+    - pandas
+    - matplotlib
+    - seaborn
+    - scikit-learn
+    - tensorflow
+    - keras
+    - flask-restful
+    - flask-cors
+    - flask-jwt-extended
+    - flask-bcrypt
+    - flask-mail
+    - flask-migrate
+3. the db manager is PostgreSQL:
+The basic Buttons Structure is:
+
+🏠 Home → /
+
+🎵 Tracks → /tracks
+
+👩‍🎤 Artists → /artists
+
+📊 Stats → /stats
+
+➕ Add Track → /tracks/create
+
+🔹 Index (Dashboard / index.html)
+
+View Tracks → /tracks
+
+View Artists → /artists
+
+View Stats → /stats
+
+Add New Track → /tracks/create
+
+🔹 Tracks (List view / index.html or tracks.html)
+
+▶️ Play Preview (optional, if audio preview is available)
+
+👁 View Details → /tracks/<id>
+
+✏️ Edit → /tracks/<id>/edit
+
+🗑 Delete → /tracks/<id>/delete
+
+👍 Like / 👎 Dislike → (updates preferences for ML recommender)
+
+🔹 Track Details (details.html)
+
+⬅ Back to Tracks
+
+✏️ Edit Track
+
+🗑 Delete Track
+
+👍 Like / 👎 Dislike (user preference)
+
+🔍 Show Similar Tracks (recommendations by ML)
+
+🔹 Create / Edit Track (create.html, edit.html)
+
+💾 Save
+
+❌ Cancel → Back to track list
+
+🔹 Stats (stats.html)
+
+📊 Show Frequency Stats
+
+📈 Show Genre Stats
+
+🎶 Show Recommendations
+
+⬅ Back to Home
+
+Note: Build only the functions for the buttons now, don't bother yourself with the design, it will be done else where.
