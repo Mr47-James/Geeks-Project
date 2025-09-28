@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+
+{% block title %}Add New Track - Music Manager{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="mb-4">
+            <i class="fas fa-plus"></i> Add New Track
+        </h1>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Track Information</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="title" class="form-label">Title *</label>
+                                <input type="text" class="form-control" id="title" name="title" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="artist_id" class="form-label">Artist *</label>
+                                <select class="form-select" id="artist_id" name="artist_id" required>
+                                    <option value="">Select an artist</option>
+                                    {% for artist in artists %}
+                                        <option value="{{ artist.id }}">{{ artist.name }}</option>
+                                    {% endfor %}
+                                </select>
+                                <div class="form-text">
+                                    Don't see the artist? <a href="{{ url_for('create_artist') }}" target="_blank">Add a new artist</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="album" class="form-label">Album</label>
+                                <input type="text" class="form-control" id="album" name="album">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="genre" class="form-label">Genre</label>
+                                <input type="text" class="form-control" id="genre" name="genre" 
+                                       placeholder="e.g., Rock, Pop, Jazz, Classical">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="duration" class="form-label">Duration (seconds)</label>
+                                <input type="number" class="form-control" id="duration" name="duration" min="1">
+                                <div class="form-text">Enter duration in seconds (e.g., 180 for 3 minutes)</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="release_year" class="form-label">Release Year</label>
+                                <input type="number" class="form-control" id="release_year" name="release_year" 
+                                       min="1900" max="2030">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('tracks') }}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Cancel
+                        </a>
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-save"></i> Save Track
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-info-circle"></i> Tips</h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled">
+                    <li class="mb-2">
+                        <i class="fas fa-check text-success"></i>
+                        Make sure to select the correct artist
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-check text-success"></i>
+                        Use consistent genre naming (e.g., "Rock" not "rock")
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-check text-success"></i>
+                        Duration helps with playlist management
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-check text-success"></i>
+                        Release year is useful for filtering
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        {% if artists|length == 0 %}
+        <div class="card mt-3">
+            <div class="card-header bg-warning">
+                <h5 class="mb-0"><i class="fas fa-exclamation-triangle"></i> No Artists</h5>
+            </div>
+            <div class="card-body">
+                <p>You need to create at least one artist before adding tracks.</p>
+                <a href="{{ url_for('create_artist') }}" class="btn btn-warning">
+                    <i class="fas fa-user-plus"></i> Add Artist
+                </a>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,727 @@
+{% extends "base.html" %}
+
+{% block title %}Browse Artists | Harmony{% endblock %}
+
+{% block content %}
+<div class="artists-page">
+    <section class="artists-hero glass-card">
+        <div class="hero-copy">
+            <span class="eyebrow">Discover</span>
+            <h1>Harmony Artists</h1>
+            <p>Explore emerging voices, follow your favourites, and dive into fresh sounds curated for every mood.</p>
+        </div>
+        <div class="hero-stats">
+            <div class="stat-chip">
+                <i class="fas fa-users"></i>
+                <span>{{ artists.total if artists else 0 }} artists</span>
+            </div>
+            <div class="stat-chip">
+                <i class="fas fa-record-vinyl"></i>
+                <span>{{ total_tracks if total_tracks is defined else '∞' }} tracks</span>
+            </div>
+        </div>
+    </section>
+
+    <section class="glass-card search-panel">
+        <form method="GET" action="{{ url_for('client_artists') }}" class="search-form">
+            <label class="field">
+                <span class="field-label">Search artists</span>
+                <input type="text" name="search" value="{{ search }}" placeholder="Artist name or keyword…" autocomplete="off">
+            </label>
+            <label class="field">
+                <span class="field-label">Genre</span>
+                <select name="genre">
+                    <option value="">All genres</option>
+                    <option value="pop" {{ 'selected' if genre_filter == 'pop' }}>Pop</option>
+                    <option value="rock" {{ 'selected' if genre_filter == 'rock' }}>Rock</option>
+                    <option value="hip-hop" {{ 'selected' if genre_filter == 'hip-hop' }}>Hip Hop</option>
+                    <option value="electronic" {{ 'selected' if genre_filter == 'electronic' }}>Electronic</option>
+                    <option value="jazz" {{ 'selected' if genre_filter == 'jazz' }}>Jazz</option>
+                    <option value="classical" {{ 'selected' if genre_filter == 'classical' }}>Classical</option>
+                </select>
+            </label>
+            <div class="field actions">
+                <button type="submit" class="harmony-button harmony-button--primary">
+                    <i class="fas fa-search"></i>
+                    <span>Search</span>
+                </button>
+                {% if search or genre_filter %}
+                <a href="{{ url_for('client_artists') }}" class="harmony-button harmony-button--ghost">
+                    <i class="fas fa-undo"></i>
+                    <span>Reset</span>
+                </a>
+                {% endif %}
+            </div>
+        </form>
+    </section>
+
+    <section class="artists-toolbar">
+        <span class="toolbar-count">
+            Showing {{ artists.items|length if artists and artists.items else 0 }} of {{ artists.total if artists else 0 }} artists
+            {% if search or genre_filter %}
+            <span class="filter-indicator">Filtered</span>
+            {% endif %}
+        </span>
+        <div class="view-toggle" role="group" aria-label="Switch catalogue view">
+            <button type="button" class="view-btn active" data-view="grid" onclick="toggleView('grid')" aria-pressed="true">
+                <i class="fas fa-th"></i>
+            </button>
+            <button type="button" class="view-btn" data-view="list" onclick="toggleView('list')" aria-pressed="false">
+                <i class="fas fa-list"></i>
+            </button>
+        </div>
+    </section>
+
+    <section class="artists-content">
+        <div class="artists-grid" id="gridView">
+            {% if artists and artists.items %}
+                {% for artist in artists.items %}
+                {% set gradient = loop.cycle('var(--primary)', 'var(--secondary)', 'var(--accent)', 'var(--success)') %}
+                {% set plays = (artist.tracks|sum(attribute='play_count') if artist.tracks else 0) or 0 %}
+                {% set likes = (artist.tracks|sum(attribute='like_count') if artist.tracks else 0) or 0 %}
+                <article class="artist-card glass-card" style="--gradient: {{ gradient }}; --delay: {{ 0.4 + loop.index * 0.05 }}s;" onclick="viewArtist({{ artist.id }})">
+                    <div class="artist-avatar">
+                        <span>{{ artist.name[:1]|upper if artist.name else '?' }}</span>
+                    </div>
+                    <div class="artist-details">
+                        <h3>{{ artist.name }}</h3>
+                        <p class="artist-genre">{{ artist.genre.title() if artist.genre else 'Genre pending' }}</p>
+                        {% if artist.bio %}
+                        <p class="artist-bio">{{ artist.bio[:140] }}{% if artist.bio|length > 140 %}…{% endif %}</p>
+                        {% endif %}
+                    </div>
+                    <dl class="artist-stats">
+                        <div class="stat">
+                            <dt>Tracks</dt>
+                            <dd>{{ artist.tracks|length }}</dd>
+                        </div>
+                        <div class="stat">
+                            <dt>Plays</dt>
+                            <dd>{{ plays }}</dd>
+                        </div>
+                        <div class="stat">
+                            <dt>Likes</dt>
+                            <dd>{{ likes }}</dd>
+                        </div>
+                    </dl>
+                    <div class="artist-actions">
+                        <button type="button" class="artist-action" onclick="event.stopPropagation(); viewArtist({{ artist.id }})" aria-label="View profile">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button type="button" class="artist-action" onclick="event.stopPropagation(); followArtist({{ artist.id }})" aria-label="Follow artist">
+                            <i class="fas fa-user-plus"></i>
+                        </button>
+                        <button type="button" class="artist-action" onclick="event.stopPropagation(); viewArtistTracks({{ artist.id }})" aria-label="View tracks">
+                            <i class="fas fa-music"></i>
+                        </button>
+                    </div>
+                </article>
+                {% endfor %}
+            {% else %}
+                <div class="empty-state">
+                    <div class="empty-icon">
+                        <i class="fas fa-user-slash"></i>
+                    </div>
+                    <h3>No artists yet</h3>
+                    <p>Be the first to follow a new voice. Try broadening your filters or check back soon.</p>
+                    <a href="{{ url_for('client_artists') }}" class="harmony-button harmony-button--primary">
+                        <i class="fas fa-microphone"></i>
+                        <span>Browse all artists</span>
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="artists-list" id="listView" style="display: none;">
+            {% if artists and artists.items %}
+                {% for artist in artists.items %}
+                {% set gradient = loop.cycle('var(--primary)', 'var(--secondary)', 'var(--accent)', 'var(--success)') %}
+                {% set plays = (artist.tracks|sum(attribute='play_count') if artist.tracks else 0) or 0 %}
+                {% set likes = (artist.tracks|sum(attribute='like_count') if artist.tracks else 0) or 0 %}
+                <article class="artist-list glass-card" style="--gradient: {{ gradient }}; --delay: {{ 0.4 + loop.index * 0.05 }}s;" onclick="viewArtist({{ artist.id }})">
+                    <div class="artist-list-avatar">
+                        <span>{{ artist.name[:1]|upper if artist.name else '?' }}</span>
+                    </div>
+                    <div class="artist-list-meta">
+                        <div class="artist-list-header">
+                            <h3>{{ artist.name }}</h3>
+                            <span class="artist-list-genre">{{ artist.genre.title() if artist.genre else 'Genre pending' }}</span>
+                        </div>
+                        <p class="artist-list-bio">{{ artist.bio[:110] if artist.bio else 'No bio available yet.' }}{% if artist.bio and artist.bio|length > 110 %}…{% endif %}</p>
+                        <ul class="artist-list-stats">
+                            <li><i class="fas fa-music"></i>{{ artist.tracks|length }} tracks</li>
+                            <li><i class="fas fa-headphones"></i>{{ plays }} plays</li>
+                            <li><i class="fas fa-heart"></i>{{ likes }} likes</li>
+                        </ul>
+                    </div>
+                    <div class="artist-list-actions">
+                        <button type="button" class="artist-action" onclick="event.stopPropagation(); followArtist({{ artist.id }})">
+                            <i class="fas fa-user-plus"></i>
+                        </button>
+                        <button type="button" class="artist-action" onclick="event.stopPropagation(); shareArtist({{ artist.id }})">
+                            <i class="fas fa-share"></i>
+                        </button>
+                    </div>
+                </article>
+                {% endfor %}
+            {% else %}
+                <div class="empty-state">
+                    <div class="empty-icon">
+                        <i class="fas fa-search"></i>
+                    </div>
+                    <h3>No results</h3>
+                    <p>We couldn’t find any artists with those filters. Try another search or reset the view.</p>
+                    <a href="{{ url_for('client_artists') }}" class="harmony-button harmony-button--ghost">
+                        <i class="fas fa-undo"></i>
+                        <span>Reset filters</span>
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </section>
+
+    {% if artists and artists.pages > 1 %}
+    <nav class="pagination-wrapper" aria-label="Artists pagination">
+        <div class="pagination-info">
+            Page {{ artists.page }} of {{ artists.pages }}
+        </div>
+        <ul class="pagination">
+            <li class="page-item {% if not artists.has_prev %}disabled{% endif %}">
+                <a class="page-link" href="{{ url_for('client_artists', page=artists.prev_num if artists.has_prev else 1, search=search, genre=genre_filter) }}" aria-label="Previous page">
+                    <i class="fas fa-chevron-left"></i>
+                </a>
+            </li>
+            {% for page_num in artists.iter_pages(left_edge=1, left_current=2, right_current=2, right_edge=1) %}
+                {% if page_num %}
+                <li class="page-item {% if artists.page == page_num %}active{% endif %}">
+                    <a class="page-link" href="{{ url_for('client_artists', page=page_num, search=search, genre=genre_filter) }}">{{ page_num }}</a>
+                </li>
+                {% else %}
+                <li class="page-item disabled"><span class="page-link">…</span></li>
+                {% endif %}
+            {% endfor %}
+            <li class="page-item {% if not artists.has_next %}disabled{% endif %}">
+                <a class="page-link" href="{{ url_for('client_artists', page=artists.next_num if artists.has_next else artists.pages, search=search, genre=genre_filter) }}" aria-label="Next page">
+                    <i class="fas fa-chevron-right"></i>
+                </a>
+            </li>
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+
+<style>
+.artists-page {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 6rem 1.5rem 4rem;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.artists-hero {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 2.5rem 3rem;
+    gap: 2rem;
+}
+
+.hero-copy h1 {
+    font-size: clamp(2.25rem, 5vw, 3rem);
+    margin-bottom: 0.75rem;
+}
+
+.hero-copy p {
+    color: var(--text-secondary);
+    max-width: 420px;
+}
+
+.eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+}
+
+.hero-stats {
+    display: grid;
+    gap: 0.75rem;
+}
+
+.stat-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.65rem;
+    padding: 0.75rem 1.25rem;
+    border-radius: var(--border-radius-sm);
+    background: rgba(255, 255, 255, 0.12);
+    color: var(--text-inverse);
+    font-weight: 500;
+}
+
+.stat-chip i {
+    font-size: 1.1rem;
+}
+
+.search-panel {
+    padding: 1.75rem 2rem;
+}
+
+.search-form {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1rem;
+    align-items: end;
+}
+
+.field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.field.actions {
+    flex-direction: row;
+    justify-content: flex-end;
+    gap: 0.75rem;
+}
+
+.field-label {
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
+    font-weight: 600;
+    color: var(--text-muted);
+}
+
+.field input,
+.field select {
+    padding: 0.9rem 1.1rem;
+    border-radius: var(--border-radius-sm);
+    border: 1px solid var(--glass-border);
+    background: var(--glass-bg);
+    color: var(--text-primary);
+    transition: border-color 0.2s ease, transform 0.2s ease;
+}
+
+.field input:focus,
+.field select:focus {
+    outline: none;
+    border-color: rgba(102, 126, 234, 0.6);
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.12);
+    transform: translateY(-1px);
+}
+
+.artists-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 0.5rem;
+}
+
+.toolbar-count {
+    color: var(--text-muted);
+    font-weight: 500;
+}
+
+.filter-indicator {
+    margin-left: 0.75rem;
+    padding: 0.25rem 0.75rem;
+    background: rgba(255, 255, 255, 0.12);
+    border-radius: var(--border-radius-sm);
+    color: var(--text-inverse);
+    font-size: 0.8rem;
+}
+
+.view-toggle {
+    display: inline-flex;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.12);
+    border-radius: 999px;
+    padding: 0.35rem;
+    gap: 0.3rem;
+}
+
+.view-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: none;
+    display: grid;
+    place-items: center;
+    color: var(--text-inverse);
+    background: transparent;
+    transition: all 0.2s ease;
+}
+
+.view-btn.active,
+.view-btn:hover {
+    background: rgba(255, 255, 255, 0.18);
+    transform: translateY(-1px);
+}
+
+.artists-content {
+    display: grid;
+    gap: 2rem;
+}
+
+.artists-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 1.5rem;
+}
+
+.artist-card {
+    position: relative;
+    padding: 1.75rem;
+    cursor: pointer;
+    animation: fadeInUp 0.6s ease both;
+}
+
+.artist-card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: var(--gradient);
+    opacity: 0.16;
+    z-index: -1;
+    border-radius: inherit;
+    transition: opacity 0.3s ease;
+}
+
+.artist-card:hover::before {
+    opacity: 0.28;
+}
+
+.artist-avatar {
+    width: 88px;
+    height: 88px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.15);
+    color: var(--text-inverse);
+    font-size: 2.2rem;
+    margin-bottom: 1rem;
+}
+
+.artist-details h3 {
+    font-size: 1.3rem;
+    font-weight: 700;
+}
+
+.artist-genre {
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 0.75rem;
+    margin-top: 0.25rem;
+}
+
+.artist-bio {
+    margin-top: 0.75rem;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.artist-stats {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    margin: 1.25rem 0;
+    gap: 1rem;
+    text-align: center;
+}
+
+.artist-stats dt {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+}
+
+.artist-stats dd {
+    font-size: 1.15rem;
+    font-weight: 700;
+}
+
+.artist-actions {
+    display: inline-flex;
+    gap: 0.75rem;
+}
+
+.artist-action {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    border: none;
+    display: grid;
+    place-items: center;
+    background: rgba(255, 255, 255, 0.14);
+    color: var(--text-inverse);
+    transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.artist-action:hover {
+    transform: translateY(-2px);
+    background: rgba(255, 255, 255, 0.22);
+}
+
+.artists-list {
+    display: grid;
+    gap: 1rem;
+}
+
+.artist-list {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 1.5rem;
+    padding: 1.5rem;
+    align-items: center;
+    cursor: pointer;
+    animation: fadeInUp 0.6s ease both;
+}
+
+.artist-list::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: var(--gradient);
+    opacity: 0.18;
+    z-index: -1;
+    border-radius: inherit;
+    transition: opacity 0.3s ease;
+}
+
+.artist-list:hover::before {
+    opacity: 0.3;
+}
+
+.artist-list-avatar {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    font-weight: 600;
+    font-size: 1.4rem;
+    color: var(--text-inverse);
+    background: rgba(255, 255, 255, 0.16);
+}
+
+.artist-list-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.artist-list-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 1rem;
+}
+
+.artist-list-genre {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-muted);
+}
+
+.artist-list-bio {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    margin: 0;
+}
+
+.artist-list-stats {
+    display: flex;
+    gap: 1.5rem;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+}
+
+.artist-list-stats i {
+    margin-right: 0.4rem;
+}
+
+.artist-list-actions {
+    display: inline-flex;
+    gap: 0.5rem;
+}
+
+.pagination-wrapper {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.pagination-info {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+.pagination {
+    display: inline-flex;
+    gap: 0.35rem;
+}
+
+.page-item {
+    list-style: none;
+}
+
+.page-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    text-decoration: none;
+    background: rgba(255, 255, 255, 0.12);
+    color: var(--text-inverse);
+    transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.page-item.disabled .page-link {
+    opacity: 0.4;
+    pointer-events: none;
+}
+
+.page-item.active .page-link,
+.page-link:hover {
+    background: rgba(255, 255, 255, 0.24);
+    transform: translateY(-1px);
+}
+
+.empty-state {
+    text-align: center;
+    padding: 3rem 2rem;
+    display: grid;
+    gap: 1rem;
+    justify-items: center;
+}
+
+.empty-icon {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.15);
+    display: grid;
+    place-items: center;
+    color: var(--text-inverse);
+    font-size: 2rem;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@media (max-width: 992px) {
+    .search-form {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .artists-hero {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .hero-stats {
+        width: 100%;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    }
+
+    .artist-list {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .search-form {
+        grid-template-columns: 1fr;
+    }
+
+    .field.actions {
+        justify-content: start;
+    }
+
+    .artists-toolbar {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+
+    .pagination-wrapper {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .artists-grid {
+        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    }
+}
+
+@media (max-width: 480px) {
+    .artists-page {
+        padding: 5rem 1rem 3rem;
+    }
+
+    .artist-card {
+        padding: 1.25rem;
+    }
+
+    .artist-actions {
+        width: 100%;
+        justify-content: space-between;
+    }
+}
+</style>
+
+<script>
+function toggleView(viewType) {
+    const gridView = document.getElementById('gridView');
+    const listView = document.getElementById('listView');
+    const viewButtons = document.querySelectorAll('.view-btn');
+
+    if (viewType === 'grid') {
+        gridView.style.display = 'grid';
+        listView.style.display = 'none';
+    } else {
+        gridView.style.display = 'none';
+        listView.style.display = 'grid';
+    }
+
+    viewButtons.forEach((button) => {
+        const isActive = button.dataset.view === viewType;
+        button.classList.toggle('active', isActive);
+        button.setAttribute('aria-pressed', String(isActive));
+    });
+
+    localStorage.setItem('harmony-artists-view', viewType);
+}
+
+(function restorePreferredView() {
+    const preferred = localStorage.getItem('harmony-artists-view') || 'grid';
+    toggleView(preferred);
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,827 @@
+{% extends "base.html" %}
+
+{% block title %}My Music Dashboard | Harmony{% endblock %}
+
+{% block content %}
+<style>
+    .client-header {
+        text-align: center;
+        margin-bottom: 3rem;
+        animation: fadeInUp 0.8s ease;
+    }
+
+    .welcome-title {
+        font-size: 2.8rem;
+        font-weight: 800;
+        background: var(--primary);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: 0.5rem;
+    }
+
+    .welcome-subtitle {
+        color: var(--text-secondary);
+        font-size: 1.2rem;
+        margin-bottom: 2rem;
+    }
+
+    .quick-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 3rem;
+    }
+
+    .stat-card {
+        padding: 2rem;
+        text-align: center;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        animation: fadeInUp 0.8s ease var(--delay, 0.2s) both;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: var(--gradient, var(--primary));
+        border-radius: var(--border-radius) var(--border-radius) 0 0;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-8px) scale(1.02);
+    }
+
+    .stat-icon {
+        width: 60px;
+        height: 60px;
+        background: var(--gradient, var(--primary));
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1rem;
+        color: white;
+        font-size: 1.5rem;
+        animation: pulse 2s infinite;
+    }
+
+    .stat-number {
+        font-size: 2rem;
+        font-weight: 800;
+        color: var(--text-primary);
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+
+    .stat-label {
+        color: var(--text-secondary);
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        font-size: 0.85rem;
+    }
+
+    .dashboard-sections {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 2rem;
+        margin-bottom: 3rem;
+    }
+
+    .section-card {
+        animation: fadeInUp 0.8s ease var(--delay, 0.4s) both;
+    }
+
+    .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        padding: 0 1.5rem;
+        padding-top: 1.5rem;
+    }
+
+    .section-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .section-title i {
+        color: #667eea;
+    }
+
+    .view-all-link {
+        color: #667eea;
+        text-decoration: none;
+        font-weight: 500;
+        font-size: 0.9rem;
+        transition: color 0.3s ease;
+    }
+
+    .view-all-link:hover {
+        color: #5a67d8;
+    }
+
+    .track-list {
+        max-height: 400px;
+        overflow-y: auto;
+        padding: 0 1.5rem 1.5rem;
+    }
+
+    .track-item {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 1rem 0;
+        border-bottom: 1px solid var(--glass-border);
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+
+    .track-item:last-child {
+        border-bottom: none;
+    }
+
+    .track-item:hover {
+        background: var(--glass-bg);
+        margin: 0 -1rem;
+        padding: 1rem;
+        border-radius: var(--border-radius-sm);
+        transform: translateX(5px);
+    }
+
+    .track-artwork {
+        width: 50px;
+        height: 50px;
+        background: var(--gradient, var(--secondary));
+        border-radius: var(--border-radius-sm);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.2rem;
+        flex-shrink: 0;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .track-artwork::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.2) 50%, transparent 70%);
+        transform: translateX(-100%);
+        transition: transform 0.6s ease;
+    }
+
+    .track-item:hover .track-artwork::before {
+        transform: translateX(100%);
+    }
+
+    .track-info {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .track-name {
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 0.25rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .track-artist {
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .track-actions {
+        display: flex;
+        gap: 0.5rem;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .track-item:hover .track-actions {
+        opacity: 1;
+    }
+
+    .track-action {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        border: none;
+        background: var(--glass-bg);
+        backdrop-filter: var(--glass-backdrop);
+        -webkit-backdrop-filter: var(--glass-backdrop);
+        color: var(--text-primary);
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.8rem;
+    }
+
+    .track-action:hover {
+        transform: scale(1.1);
+        background: var(--primary);
+        color: white;
+    }
+
+    .track-action.liked {
+        background: var(--success);
+        color: white;
+    }
+
+    .track-action.bookmarked {
+        background: var(--warning);
+        color: white;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 3rem 1.5rem;
+        color: var(--text-muted);
+    }
+
+    .empty-icon {
+        width: 60px;
+        height: 60px;
+        background: var(--glass-bg);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1rem;
+        font-size: 1.5rem;
+        color: var(--text-muted);
+    }
+
+    .empty-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--text-secondary);
+        margin-bottom: 0.5rem;
+    }
+
+    .empty-message {
+        font-size: 0.9rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .discover-section {
+        margin-bottom: 3rem;
+        animation: fadeInUp 0.8s ease 0.6s both;
+    }
+
+    .recommendations-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 1.5rem;
+        padding: 1.5rem;
+    }
+
+    .recommendation-card {
+        padding: 1.5rem;
+        text-align: center;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .recommendation-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: var(--gradient, var(--accent));
+        opacity: 0.1;
+        transition: left 0.3s ease;
+    }
+
+    .recommendation-card:hover::before {
+        left: 0;
+    }
+
+    .recommendation-card:hover {
+        transform: translateY(-5px) scale(1.02);
+    }
+
+    .recommendation-artwork {
+        width: 80px;
+        height: 80px;
+        background: var(--gradient, var(--accent));
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1rem;
+        color: white;
+        font-size: 2rem;
+        animation: pulse 2s infinite;
+    }
+
+    .recommendation-title {
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 0.5rem;
+    }
+
+    .recommendation-artist {
+        color: var(--text-secondary);
+        margin-bottom: 1rem;
+        font-size: 0.9rem;
+    }
+
+    .recommendation-stats {
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+        font-size: 0.8rem;
+        color: var(--text-muted);
+    }
+
+    .recommendation-stat {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+
+    @keyframes pulse {
+        0%, 100% {
+            transform: scale(1);
+        }
+        50% {
+            transform: scale(1.05);
+        }
+    }
+
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @media (max-width: 768px) {
+        .dashboard-sections {
+            grid-template-columns: 1fr;
+        }
+
+        .quick-stats {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .recommendations-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .welcome-title {
+            font-size: 2.2rem;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .quick-stats {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<!-- Client Header -->
+<div class="client-header">
+    <h1 class="welcome-title">Welcome back, {{ user.username }}!</h1>
+    <p class="welcome-subtitle">Discover and enjoy your personalized music experience</p>
+</div>
+
+<!-- Quick Stats -->
+<div class="quick-stats">
+    <div class="glass-card stat-card" style="--delay: 0.2s; --gradient: var(--primary);">
+        <div class="stat-icon">
+            <i class="fas fa-heart"></i>
+        </div>
+        <span class="stat-number">{{ bookmarked_tracks|length }}</span>
+        <span class="stat-label">Bookmarked</span>
+    </div>
+    
+    <div class="glass-card stat-card" style="--delay: 0.3s; --gradient: var(--secondary);">
+        <div class="stat-icon">
+            <i class="fas fa-play"></i>
+        </div>
+        <span class="stat-number">{{ recent_tracks|length }}</span>
+        <span class="stat-label">Recently Played</span>
+    </div>
+    
+    <div class="glass-card stat-card" style="--delay: 0.4s; --gradient: var(--accent);">
+        <div class="stat-icon">
+            <i class="fas fa-star"></i>
+        </div>
+        <span class="stat-number">{{ recommended_tracks|length }}</span>
+        <span class="stat-label">Recommendations</span>
+    </div>
+</div>
+
+<!-- Dashboard Sections -->
+<div class="dashboard-sections">
+    <!-- Bookmarked Tracks -->
+    <div class="glass-card section-card" style="--delay: 0.4s;">
+        <div class="section-header">
+            <h2 class="section-title">
+                <i class="fas fa-heart"></i>
+                My Favorites
+            </h2>
+            <a href="{{ url_for('client_my_tracks') }}" class="view-all-link">View All</a>
+        </div>
+        <div class="track-list">
+            {% if bookmarked_tracks %}
+                {% for track in bookmarked_tracks[:5] %}
+                <div class="track-item" onclick="playTrack({{ track.id }})">
+                    <div class="track-artwork" style="--gradient: var(--primary);">
+                        <i class="fas fa-music"></i>
+                    </div>
+                    <div class="track-info">
+                        <div class="track-name">{{ track.title }}</div>
+                        <div class="track-artist">{{ track.artist.name if track.artist else 'Unknown Artist' }}</div>
+                    </div>
+                    <div class="track-actions">
+                        <button class="track-action" onclick="event.stopPropagation(); likeTrack({{ track.id }})" title="Like">
+                            <i class="fas fa-thumbs-up"></i>
+                        </button>
+                        <button class="track-action bookmarked" onclick="event.stopPropagation(); toggleBookmark({{ track.id }})" title="Remove from favorites">
+                            <i class="fas fa-heart"></i>
+                        </button>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+            <div class="empty-state">
+                <div class="empty-icon">
+                    <i class="fas fa-heart"></i>
+                </div>
+                <div class="empty-title">No favorites yet</div>
+                <div class="empty-message">Start bookmarking tracks you love!</div>
+                <a href="{{ url_for('client_tracks') }}" class="btn btn-primary">
+                    <i class="fas fa-search"></i>
+                    Browse Music
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Recently Played -->
+    <div class="glass-card section-card" style="--delay: 0.5s;">
+        <div class="section-header">
+            <h2 class="section-title">
+                <i class="fas fa-clock"></i>
+                Recently Played
+            </h2>
+            <a href="{{ url_for('client_tracks') }}" class="view-all-link">Browse More</a>
+        </div>
+        <div class="track-list">
+            {% if recent_tracks %}
+                {% for track in recent_tracks[:5] %}
+                <div class="track-item" onclick="playTrack({{ track.id }})">
+                    <div class="track-artwork" style="--gradient: var(--secondary);">
+                        <i class="fas fa-play"></i>
+                    </div>
+                    <div class="track-info">
+                        <div class="track-name">{{ track.title }}</div>
+                        <div class="track-artist">{{ track.artist.name if track.artist else 'Unknown Artist' }}</div>
+                    </div>
+                    <div class="track-actions">
+                        <button class="track-action" onclick="event.stopPropagation(); likeTrack({{ track.id }})" title="Like">
+                            <i class="fas fa-thumbs-up"></i>
+                        </button>
+                        <button class="track-action" onclick="event.stopPropagation(); toggleBookmark({{ track.id }})" title="Add to favorites">
+                            <i class="fas fa-heart"></i>
+                        </button>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+            <div class="empty-state">
+                <div class="empty-icon">
+                    <i class="fas fa-play"></i>
+                </div>
+                <div class="empty-title">No recent activity</div>
+                <div class="empty-message">Start listening to see your history here!</div>
+                <a href="{{ url_for('client_tracks') }}" class="btn btn-secondary">
+                    <i class="fas fa-music"></i>
+                    Explore Music
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Recommendations Section -->
+<div class="glass-card discover-section">
+    <div class="section-header">
+        <h2 class="section-title">
+            <i class="fas fa-magic"></i>
+            Recommended for You
+        </h2>
+        <a href="{{ url_for('client_tracks') }}" class="view-all-link">Discover More</a>
+    </div>
+    
+    {% if recommended_tracks %}
+    <div class="recommendations-grid">
+        {% for track in recommended_tracks[:6] %}
+        <div class="glass-card recommendation-card" onclick="playTrack({{ track.id }})">
+            <div class="recommendation-artwork" style="--gradient: var(--accent);">
+                <i class="fas fa-star"></i>
+            </div>
+            <div class="recommendation-title">{{ track.title }}</div>
+            <div class="recommendation-artist">{{ track.artist.name if track.artist else 'Unknown Artist' }}</div>
+            <div class="recommendation-stats">
+                <div class="recommendation-stat">
+                    <i class="fas fa-play"></i>
+                    <span>{{ track.play_count }}</span>
+                </div>
+                <div class="recommendation-stat">
+                    <i class="fas fa-heart"></i>
+                    <span>{{ track.like_count }}</span>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-icon">
+            <i class="fas fa-magic"></i>
+        </div>
+        <div class="empty-title">Building your recommendations</div>
+        <div class="empty-message">Listen to more music to get personalized suggestions!</div>
+        <a href="{{ url_for('client_tracks') }}" class="btn btn-accent">
+            <i class="fas fa-compass"></i>
+            Start Exploring
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+    // Global track management for dashboard
+    let dashboardTracks = [];
+    
+    // Initialize dashboard tracks data
+    document.addEventListener('DOMContentLoaded', function() {
+        // Collect all tracks on the dashboard
+        dashboardTracks = Array.from(document.querySelectorAll('.track-item')).map(item => {
+            const trackId = parseInt(item.getAttribute('onclick').match(/playTrack\((\d+)\)/)[1]);
+            const title = item.querySelector('.track-name').textContent;
+            const artist = item.querySelector('.track-artist').textContent;
+            
+            return {
+                id: trackId,
+                title: title,
+                artist: artist,
+                album: ''
+            };
+        });
+    });
+
+    // Play track function with audio player integration
+    async function playTrack(trackId) {
+        try {
+            // Track play activity first
+            const response = await fetch(`/client/track/${trackId}/play`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ duration: 0 })
+            });
+            
+            const data = await response.json();
+            
+            if (data.status === 'success') {
+                // Use the audio player if available
+                if (window.harmonyPlayer) {
+                    // Set current dashboard tracks as playlist and play the selected track
+                    const trackIndex = dashboardTracks.findIndex(t => t.id === trackId);
+                    if (trackIndex !== -1) {
+                        window.harmonyPlayer.setPlaylist(dashboardTracks, trackIndex);
+                        await window.harmonyPlayer.loadTrack(trackId, true);
+                        showNotification(`Now playing: ${dashboardTracks[trackIndex].title}`, 'success');
+                    } else {
+                        // Single track play
+                        await window.harmonyPlayer.loadTrack(trackId, true);
+                        showNotification('Playing track...', 'success');
+                    }
+                } else {
+                    showNotification('Audio player not ready. Please wait...', 'warning');
+                }
+            } else {
+                showNotification('Error playing track: ' + data.message, 'error');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            showNotification('An error occurred while playing the track', 'error');
+        }
+    }
+
+    // Play all dashboard tracks
+    async function playAllDashboardTracks() {
+        if (dashboardTracks.length === 0) return;
+        
+        if (window.harmonyPlayer) {
+            window.harmonyPlayer.setPlaylist(dashboardTracks, 0);
+            await window.harmonyPlayer.loadTrack(dashboardTracks[0].id, true);
+            showNotification(`Playing all ${dashboardTracks.length} tracks from dashboard`, 'success');
+        } else {
+            showNotification('Audio player not ready', 'error');
+        }
+    }
+
+    // Add all dashboard tracks to queue
+    function addAllDashboardToQueue() {
+        if (dashboardTracks.length === 0) return;
+        
+        if (window.harmonyPlayer) {
+            dashboardTracks.forEach(track => {
+                window.harmonyPlayer.addToQueue(track);
+            });
+            showNotification(`Added ${dashboardTracks.length} tracks to queue`, 'success');
+        } else {
+            showNotification('Audio player not ready', 'error');
+        }
+    }
+
+    // Add single track to queue
+    function addToQueue(trackId) {
+        const track = dashboardTracks.find(t => t.id === trackId);
+        if (!track) return;
+        
+        if (window.harmonyPlayer) {
+            window.harmonyPlayer.addToQueue(track);
+            showNotification(`Added "${track.title}" to queue`, 'success');
+        } else {
+            showNotification('Audio player not ready', 'error');
+        }
+    }
+
+    // Like track function
+    function likeTrack(trackId) {
+        fetch(`/client/track/${trackId}/like`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                const flashContainer = document.querySelector('.flash-messages');
+                const notification = document.createElement('div');
+                notification.className = 'flash-message success';
+                notification.innerHTML = '<i class="fas fa-thumbs-up"></i> Track liked!';
+                flashContainer.appendChild(notification);
+                setTimeout(() => notification.remove(), 2000);
+            }
+        })
+        .catch(console.error);
+    }
+
+    // Toggle bookmark function
+    function toggleBookmark(trackId) {
+        fetch(`/client/track/${trackId}/bookmark`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                const flashContainer = document.querySelector('.flash-messages');
+                const notification = document.createElement('div');
+                notification.className = 'flash-message success';
+                notification.innerHTML = `<i class="fas fa-heart"></i> ${data.bookmarked ? 'Added to' : 'Removed from'} favorites!`;
+                flashContainer.appendChild(notification);
+                setTimeout(() => notification.remove(), 2000);
+                
+                // Refresh page after a short delay to update the UI
+                setTimeout(() => location.reload(), 1000);
+            }
+        })
+        .catch(console.error);
+    }
+
+    // Animate numbers on load
+    function animateNumbers() {
+        document.querySelectorAll('.stat-number').forEach(element => {
+            const target = parseInt(element.textContent) || 0;
+            if (target === 0) return;
+            
+            let current = 0;
+            const increment = target / 30;
+            const timer = setInterval(() => {
+                current += increment;
+                if (current >= target) {
+                    element.textContent = target;
+                    clearInterval(timer);
+                } else {
+                    element.textContent = Math.floor(current);
+                }
+            }, 50);
+        });
+    }
+
+    // Add hover effects to track items
+    document.querySelectorAll('.track-item').forEach(item => {
+        item.addEventListener('mouseenter', function() {
+            const artwork = this.querySelector('.track-artwork');
+            artwork.style.transform = 'scale(1.1) rotate(5deg)';
+        });
+        
+        item.addEventListener('mouseleave', function() {
+            const artwork = this.querySelector('.track-artwork');
+            artwork.style.transform = 'scale(1) rotate(0deg)';
+        });
+    });
+
+    // Start animations when page loads
+    document.addEventListener('DOMContentLoaded', function() {
+        setTimeout(animateNumbers, 500);
+    });
+
+    // Utility function to show notifications
+    function showNotification(message, type = 'info') {
+        const flashContainer = document.querySelector('.flash-messages');
+        if (!flashContainer) return;
+        
+        const notification = document.createElement('div');
+        notification.className = `flash-message ${type}`;
+        
+        const icon = type === 'success' ? 'check-circle' : 
+                    type === 'error' ? 'exclamation-triangle' : 
+                    type === 'warning' ? 'exclamation-triangle' : 'info-circle';
+        
+        notification.innerHTML = `<i class="fas fa-${icon}"></i> ${message}`;
+        flashContainer.appendChild(notification);
+        
+        // Auto remove after 4 seconds
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.style.animation = 'slideInRight 0.3s ease reverse';
+                setTimeout(() => notification.remove(), 300);
+            }
+        }, 4000);
+    }
+
+    // Keyboard shortcuts
+    document.addEventListener('keydown', function(e) {
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+        
+        if (e.ctrlKey || e.metaKey) {
+            switch(e.key) {
+                case 'b':
+                    e.preventDefault();
+                    window.location.href = "{{ url_for('client_tracks') }}";
+                    break;
+                case 'm':
+                    e.preventDefault();
+                    window.location.href = "{{ url_for('client_my_tracks') }}";
+                    break;
+                case 'p':
+                    e.preventDefault();
+                    playAllDashboardTracks();
+                    break;
+                case 'q':
+                    e.preventDefault();
+                    addAllDashboardToQueue();
+                    break;
+            }
+        }
+    });
+</script>
+{% endblock %}

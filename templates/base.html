@@ -1,0 +1,1829 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Harmony Music{% endblock %}</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/audio-player.css') }}">
+    <style>
+        :root {
+            /* Light Mode Colors */
+            --primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --secondary: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --accent: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            --success: linear-gradient(135deg, #81FBB8 0%, #28C76F 100%);
+            --warning: linear-gradient(135deg, #FFD93D 0%, #FF6B6B 100%);
+            --danger: linear-gradient(135deg, #FF6B6B 0%, #EE5A24 100%);
+            
+            /* Glass Effects */
+            --glass-bg: rgba(255, 255, 255, 0.1);
+            --glass-border: rgba(255, 255, 255, 0.2);
+            --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+            --glass-backdrop: blur(8px);
+            
+            /* Text Colors */
+            --text-primary: #2d3748;
+            --text-secondary: #4a5568;
+            --text-muted: #718096;
+            --text-inverse: #ffffff;
+            
+            /* Background */
+            --bg-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --bg-secondary: #f7fafc;
+            --bg-card: rgba(255, 255, 255, 0.9);
+            --bg-overlay: rgba(0, 0, 0, 0.5);
+            
+            /* Borders */
+            --border-color: rgba(255, 255, 255, 0.2);
+            --border-radius: 16px;
+            --border-radius-sm: 8px;
+            --border-radius-lg: 24px;
+        }
+
+        [data-theme="dark"] {
+            /* Dark Mode Colors */
+            --primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --secondary: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --accent: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            
+            /* Glass Effects Dark */
+            --glass-bg: rgba(0, 0, 0, 0.3);
+            --glass-border: rgba(255, 255, 255, 0.15);
+            --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+            
+            /* Text Colors Dark */
+            --text-primary: #f7fafc;
+            --text-secondary: #e2e8f0;
+            --text-muted: #a0aec0;
+            --text-inverse: #ffffff;
+            
+            /* Background Dark */
+            --bg-primary: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
+            --bg-secondary: #1a202c;
+            --bg-card: rgba(0, 0, 0, 0.4);
+            --bg-overlay: rgba(0, 0, 0, 0.7);
+            
+            /* Borders Dark */
+            --border-color: rgba(255, 255, 255, 0.15);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Animated Background */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(120, 219, 255, 0.3) 0%, transparent 50%);
+            z-index: -1;
+            animation: backgroundShift 20s ease-in-out infinite;
+        }
+
+        @keyframes backgroundShift {
+            0%, 100% { transform: scale(1) rotate(0deg); }
+            50% { transform: scale(1.1) rotate(180deg); }
+        }
+
+        /* Glass Navigation */
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            background: var(--glass-bg);
+            backdrop-filter: var(--glass-backdrop);
+            -webkit-backdrop-filter: var(--glass-backdrop);
+            border-bottom: 1px solid var(--glass-border);
+            box-shadow: var(--glass-shadow);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .navbar-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .navbar-brand {
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+            color: var(--text-inverse);
+            font-weight: 800;
+            font-size: 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .navbar-brand:hover {
+            transform: scale(1.05);
+            text-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+        }
+
+        .navbar-brand i {
+            margin-right: 0.5rem;
+            background: var(--accent);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-size: 1.8rem;
+        }
+
+        .navbar-nav {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            list-style: none;
+        }
+
+        .nav-link {
+            color: var(--text-inverse);
+            text-decoration: none;
+            padding: 0.75rem 1.25rem;
+            border-radius: var(--border-radius-sm);
+            font-weight: 500;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            white-space: nowrap;
+        }
+
+        .nav-link::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.1));
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: -1;
+        }
+
+        .nav-link:hover::before {
+            opacity: 1;
+        }
+
+        .nav-link.active::before {
+            background: var(--accent);
+            opacity: 0.8;
+        }
+
+        .nav-link:hover,
+        .nav-link.active {
+            color: var(--text-inverse);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+
+        .nav-link:hover {
+            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .nav-link i {
+            font-size: 0.9rem;
+            transition: transform 0.3s ease;
+        }
+
+        .nav-link:hover i {
+            transform: scale(1.1);
+        }
+
+        /* User Dropdown */
+        .user-dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .user-toggle {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 50px;
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text-inverse);
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .user-toggle:hover {
+            background: var(--glass-border);
+            transform: translateY(-2px);
+        }
+
+        .user-toggle i {
+            transition: transform 0.3s ease;
+        }
+
+        .user-toggle:hover i {
+            transform: rotate(180deg);
+        }
+
+        .user-dropdown-menu {
+            position: absolute;
+            top: calc(100% + 10px);
+            right: 0;
+            min-width: 250px;
+            background: var(--glass-bg);
+            backdrop-filter: var(--glass-backdrop);
+            -webkit-backdrop-filter: var(--glass-backdrop);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--border-radius);
+            box-shadow: var(--glass-shadow);
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 1001;
+        }
+
+        .user-dropdown.active .user-dropdown-menu {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .user-dropdown-header {
+            padding: 1rem;
+            border-bottom: 1px solid var(--glass-border);
+            text-align: center;
+        }
+
+        .user-avatar {
+            width: 50px;
+            height: 50px;
+            background: var(--primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 0.5rem;
+            color: white;
+            font-size: 1.2rem;
+        }
+
+        .user-name {
+            font-weight: 600;
+            color: var(--text-inverse);
+            margin-bottom: 0.25rem;
+        }
+
+        .user-email {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .user-dropdown-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 1rem;
+            color: var(--text-inverse);
+            text-decoration: none;
+            transition: all 0.3s ease;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .user-dropdown-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateX(5px);
+        }
+
+        .user-dropdown-item i {
+            width: 16px;
+            text-align: center;
+            font-size: 0.9rem;
+        }
+
+        .user-dropdown-divider {
+            height: 1px;
+            background: var(--glass-border);
+            margin: 0.5rem 0;
+        }
+
+        /* Dark Mode Toggle */
+        .theme-toggle {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 50px;
+            padding: 0.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text-inverse);
+            font-size: 1.1rem;
+        }
+
+        .theme-toggle:hover {
+            background: var(--glass-border);
+            transform: scale(1.05);
+        }
+
+        .theme-toggle i {
+            transition: all 0.3s ease;
+        }
+
+        /* Glass Cards */
+        .glass-card {
+            background: var(--glass-bg);
+            backdrop-filter: var(--glass-backdrop);
+            -webkit-backdrop-filter: var(--glass-backdrop);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--border-radius);
+            box-shadow: var(--glass-shadow);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .glass-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Gradient Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: var(--border-radius-sm);
+            font-weight: 600;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            font-size: 0.95rem;
+            gap: 0.5rem;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .btn:hover::before {
+            left: 100%;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: var(--text-inverse);
+        }
+
+        .btn-secondary {
+            background: var(--secondary);
+            color: var(--text-inverse);
+        }
+
+        .btn-accent {
+            background: var(--accent);
+            color: var(--text-inverse);
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: var(--text-inverse);
+        }
+
+        .btn-warning {
+            background: var(--warning);
+            color: var(--text-inverse);
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: var(--text-inverse);
+        }
+
+        .btn-glass {
+            background: var(--glass-bg);
+            backdrop-filter: var(--glass-backdrop);
+            -webkit-backdrop-filter: var(--glass-backdrop);
+            border: 1px solid var(--glass-border);
+            color: var(--text-primary);
+        }
+
+        /* Main Content */
+        .main-content {
+            margin-top: 80px;
+            min-height: calc(100vh - 80px);
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* Flash Messages */
+        .flash-messages {
+            position: fixed;
+            top: 100px;
+            right: 20px;
+            z-index: 1001;
+            max-width: 400px;
+        }
+
+        .flash-message {
+            background: var(--glass-bg);
+            backdrop-filter: var(--glass-backdrop);
+            -webkit-backdrop-filter: var(--glass-backdrop);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--border-radius-sm);
+            padding: 1rem;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+            box-shadow: var(--glass-shadow);
+            animation: slideInRight 0.3s ease;
+            position: relative;
+        }
+
+        .flash-message.success {
+            border-left: 4px solid #28C76F;
+        }
+
+        .flash-message.error {
+            border-left: 4px solid #EE5A24;
+        }
+
+        .flash-message.info {
+            border-left: 4px solid #00f2fe;
+        }
+
+        .flash-message.warning {
+            border-left: 4px solid #FFD93D;
+        }
+
+        @keyframes slideInRight {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        /* Form Styles */
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            background: var(--glass-bg);
+            backdrop-filter: var(--glass-backdrop);
+            -webkit-backdrop-filter: var(--glass-backdrop);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--border-radius-sm);
+            color: var(--text-primary);
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            transform: translateY(-1px);
+        }
+
+        .form-control::placeholder {
+            color: var(--text-muted);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .navbar-container {
+                padding: 1rem;
+            }
+
+            .navbar-nav {
+                gap: 0.5rem;
+            }
+
+            .nav-link {
+                padding: 0.4rem 0.8rem;
+                font-size: 0.9rem;
+            }
+
+            .main-content {
+                padding: 1rem;
+            }
+
+            .flash-messages {
+                right: 10px;
+                left: 10px;
+                max-width: none;
+            }
+        }
+
+        /* Loading Animation */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @keyframes fadeOut {
+            from {
+                opacity: 1;
+                transform: translateY(0);
+            }
+            to {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+        }
+
+        /* Control Panel Styles */
+        .control-panel-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--bg-overlay);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            z-index: 2000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        .control-panel-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .control-panel-container {
+            width: 100%;
+            max-width: 1200px;
+            height: 85vh;
+            max-height: 800px;
+            background: var(--glass-bg);
+            backdrop-filter: var(--glass-backdrop);
+            -webkit-backdrop-filter: var(--glass-backdrop);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--border-radius-lg);
+            box-shadow: var(--glass-shadow);
+            display: flex;
+            flex-direction: column;
+            transform: scale(0.9);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            margin: auto;
+        }
+
+        .control-panel-overlay.active .control-panel-container {
+            transform: scale(1);
+        }
+
+        .control-panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 2rem 2.5rem;
+            border-bottom: 1px solid var(--glass-border);
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+            border-radius: var(--border-radius-lg) var(--border-radius-lg) 0 0;
+        }
+
+        .control-panel-title {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .control-panel-title i {
+            color: #667eea;
+            font-size: 1.5rem;
+        }
+
+        .control-panel-close {
+            width: 45px;
+            height: 45px;
+            border: none;
+            background: var(--glass-bg);
+            border-radius: 50%;
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+        }
+
+        .control-panel-close:hover {
+            background: var(--danger);
+            color: white;
+            transform: scale(1.1);
+        }
+
+        .control-panel-body {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+            min-height: 0;
+        }
+
+        .control-panel-sidebar {
+            width: 280px;
+            background: rgba(0, 0, 0, 0.05);
+            border-right: 1px solid var(--glass-border);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-nav {
+            display: flex;
+            flex-direction: column;
+            padding: 1.5rem 0;
+            gap: 0.5rem;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1.25rem 2rem;
+            border: none;
+            background: transparent;
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: left;
+            font-weight: 500;
+            font-size: 0.95rem;
+            margin: 0 1rem;
+            border-radius: var(--border-radius-sm);
+        }
+
+        .nav-item:hover {
+            background: rgba(102, 126, 234, 0.1);
+            transform: translateX(5px);
+        }
+
+        .nav-item.active {
+            background: var(--primary);
+            color: white;
+            transform: translateX(5px);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .nav-item i {
+            width: 20px;
+            text-align: center;
+            font-size: 1rem;
+        }
+
+        .control-main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .control-section {
+            flex: 1;
+            padding: 2.5rem 3rem;
+            overflow-y: auto;
+            display: none;
+        }
+
+        .control-section.active {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .section-header {
+            margin-bottom: 2.5rem;
+            text-align: center;
+        }
+
+        .section-header h3 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .section-header p {
+            color: var(--text-secondary);
+            font-size: 1rem;
+            margin: 0;
+        }
+
+        .section-content {
+            flex: 1;
+            max-width: 800px;
+            margin: 0 auto;
+            width: 100%;
+            animation: fadeInUp 0.5s ease;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .profile-avatar {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 3rem;
+        }
+
+        .avatar-circle {
+            width: 120px;
+            height: 120px;
+            background: var(--primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 3rem;
+            margin-bottom: 1.5rem;
+            transition: transform 0.3s ease;
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .avatar-circle:hover {
+            transform: scale(1.05);
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .form-group {
+            margin-bottom: 2rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.75rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 0.95rem;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 1rem 1.25rem;
+            background: var(--glass-bg);
+            backdrop-filter: var(--glass-backdrop);
+            -webkit-backdrop-filter: var(--glass-backdrop);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--border-radius-sm);
+            color: var(--text-primary);
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            transform: translateY(-1px);
+        }
+
+        .section-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            padding-top: 2rem;
+            border-top: 1px solid var(--glass-border);
+            margin-top: 2rem;
+        }
+
+        .settings-grid {
+            display: grid;
+            gap: 1.5rem;
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        .security-item,
+        .privacy-item,
+        .notification-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 2rem;
+            background: var(--glass-bg);
+            border-radius: var(--border-radius);
+            transition: all 0.3s ease;
+            border: 1px solid var(--glass-border);
+        }
+
+        .security-item:hover,
+        .privacy-item:hover,
+        .notification-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 35px rgba(0, 0, 0, 0.15);
+        }
+
+        .security-info,
+        .privacy-info {
+            flex: 1;
+            margin-right: 2rem;
+        }
+
+        .security-info h4,
+        .privacy-info h4 {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+            font-size: 1.1rem;
+        }
+
+        .security-info p,
+        .privacy-info p {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 60px;
+            height: 30px;
+            flex-shrink: 0;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-switch label {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: #ccc;
+            border-radius: 30px;
+            transition: 0.3s;
+        }
+
+        .toggle-switch label:before {
+            position: absolute;
+            content: "";
+            height: 24px;
+            width: 24px;
+            left: 3px;
+            bottom: 3px;
+            background: white;
+            border-radius: 50%;
+            transition: 0.3s;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .toggle-switch input:checked + label {
+            background: #667eea;
+        }
+
+        .toggle-switch input:checked + label:before {
+            transform: translateX(30px);
+        }
+
+        .payment-section,
+        .billing-section {
+            margin-bottom: 3rem;
+        }
+
+        .payment-section h4,
+        .billing-section h4 {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 1.5rem;
+            font-size: 1.2rem;
+            text-align: center;
+        }
+
+        .payment-card {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem;
+            background: var(--glass-bg);
+            border-radius: var(--border-radius);
+            margin-bottom: 1rem;
+            border: 1px solid var(--glass-border);
+            transition: all 0.3s ease;
+        }
+
+        .payment-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .card-info {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .card-info i {
+            font-size: 2rem;
+            color: #1a1f71;
+        }
+
+        .notification-groups {
+            display: grid;
+            gap: 2rem;
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        .notification-group h4 {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 1.5rem;
+            font-size: 1.2rem;
+            text-align: center;
+        }
+
+        .notification-list {
+            display: grid;
+            gap: 1rem;
+        }
+
+        .danger-zone {
+            margin-top: 3rem;
+            padding: 2rem;
+            background: rgba(238, 90, 36, 0.1);
+            border: 2px solid rgba(238, 90, 36, 0.3);
+            border-radius: var(--border-radius);
+            text-align: center;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .danger-zone h4 {
+            color: #EE5A24;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            font-size: 1.3rem;
+        }
+
+        .danger-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .danger-info h5 {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+            font-size: 1.1rem;
+        }
+
+        .danger-info p {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            line-height: 1.5;
+            margin-bottom: 1.5rem;
+        }
+
+        .btn-sm {
+            padding: 0.75rem 1.5rem;
+            font-size: 0.9rem;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1024px) {
+            .control-panel-container {
+                width: 95%;
+                height: 90vh;
+            }
+
+            .control-panel-header {
+                padding: 1.5rem 2rem;
+            }
+
+            .control-section {
+                padding: 2rem;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .control-panel-overlay {
+                padding: 1rem;
+            }
+
+            .control-panel-container {
+                height: 95vh;
+            }
+
+            .control-panel-header {
+                padding: 1rem 1.5rem;
+            }
+
+            .control-panel-title {
+                font-size: 1.4rem;
+            }
+
+            .control-panel-body {
+                flex-direction: column;
+            }
+
+            .control-panel-sidebar {
+                width: 100%;
+                height: auto;
+                border-right: none;
+                border-bottom: 1px solid var(--glass-border);
+            }
+
+            .sidebar-nav {
+                flex-direction: row;
+                overflow-x: auto;
+                padding: 1rem;
+                gap: 0.5rem;
+            }
+
+            .nav-item {
+                white-space: nowrap;
+                min-width: 140px;
+                justify-content: center;
+                margin: 0;
+                padding: 1rem 1.5rem;
+            }
+
+            .nav-item.active {
+                transform: none;
+                border-radius: var(--border-radius-sm);
+            }
+
+            .control-section {
+                padding: 1.5rem;
+            }
+
+            .section-header {
+                margin-bottom: 2rem;
+            }
+
+            .section-header h3 {
+                font-size: 1.3rem;
+            }
+
+            .profile-avatar {
+                margin-bottom: 2rem;
+            }
+
+            .avatar-circle {
+                width: 100px;
+                height: 100px;
+                font-size: 2.5rem;
+            }
+
+            .form-grid {
+                gap: 1.5rem;
+            }
+
+            .security-item,
+            .privacy-item,
+            .notification-item {
+                padding: 1.5rem;
+                flex-direction: column;
+                text-align: center;
+                gap: 1rem;
+            }
+
+            .security-info,
+            .privacy-info {
+                margin-right: 0;
+                margin-bottom: 1rem;
+            }
+
+            .section-actions {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .control-panel-header {
+                padding: 1rem;
+            }
+
+            .control-panel-title {
+                font-size: 1.2rem;
+            }
+
+            .control-section {
+                padding: 1rem;
+            }
+
+            .sidebar-nav {
+                padding: 0.5rem;
+            }
+
+            .nav-item {
+                min-width: 120px;
+                padding: 0.75rem 1rem;
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="navbar-container">
+            <a href="{{ url_for('index') }}" class="navbar-brand">
+                <i class="fas fa-music"></i>
+                Harmony
+            </a>
+            
+            <ul class="navbar-nav">
+                {% if session.logged_in %}
+                    {% if session.role == 'technician' %}
+                        <li><a href="{{ url_for('admin_dashboard') }}" class="nav-link {{ 'active' if request.endpoint == 'admin_dashboard' }}">
+                            <i class="fas fa-tachometer-alt"></i> Dashboard
+                        </a></li>
+                        <li><a href="{{ url_for('tracks') }}" class="nav-link {{ 'active' if request.endpoint == 'tracks' }}">
+                            <i class="fas fa-music"></i> Tracks
+                        </a></li>
+                        <li><a href="{{ url_for('artists') }}" class="nav-link {{ 'active' if request.endpoint == 'artists' }}">
+                            <i class="fas fa-microphone"></i> Artists
+                        </a></li>
+                        <li><a href="{{ url_for('upload_tracks') }}" class="nav-link {{ 'active' if request.endpoint == 'upload_tracks' }}">
+                            <i class="fas fa-upload"></i> Upload
+                        </a></li>
+                        <li><a href="{{ url_for('stats') }}" class="nav-link {{ 'active' if request.endpoint == 'stats' }}">
+                            <i class="fas fa-chart-bar"></i> Analytics
+                        </a></li>
+                    {% else %}
+                        <li><a href="{{ url_for('client_dashboard') }}" class="nav-link {{ 'active' if request.endpoint == 'client_dashboard' }}">
+                            <i class="fas fa-home"></i> Home
+                        </a></li>
+                        <li><a href="{{ url_for('client_tracks') }}" class="nav-link {{ 'active' if request.endpoint == 'client_tracks' }}">
+                            <i class="fas fa-music"></i> Browse
+                        </a></li>
+                        <li><a href="{{ url_for('client_artists') }}" class="nav-link {{ 'active' if request.endpoint == 'client_artists' }}">
+                            <i class="fas fa-microphone"></i> Artists
+                        </a></li>
+                        <li><a href="{{ url_for('client_my_tracks') }}" class="nav-link {{ 'active' if request.endpoint == 'client_my_tracks' }}">
+                            <i class="fas fa-heart"></i> My Music
+                        </a></li>
+                        <li><a href="{{ url_for('client_upload_tracks') }}" class="nav-link {{ 'active' if request.endpoint in ['client_upload_tracks', 'client_my_uploads'] }}">
+                            <i class="fas fa-upload"></i> Upload
+                        </a></li>
+                    {% endif %}
+                    <!-- User Dropdown -->
+                    <li class="user-dropdown">
+                        <div class="user-toggle" onclick="toggleUserDropdown()">
+                            <i class="fas fa-user"></i>
+                            <span>{{ session.username }}</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
+                        <div class="user-dropdown-menu">
+                            <div class="user-dropdown-header">
+                                <div class="user-avatar">
+                                    <i class="fas fa-user"></i>
+                                </div>
+                                <div class="user-name">{{ session.username }}</div>
+                                <div class="user-email">{{ session.get('email', 'user@example.com') }}</div>
+                            </div>
+                            {% if session.role == 'consumer' %}
+                            <a href="{{ url_for('client_my_uploads') }}" class="user-dropdown-item">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                                <span>My Uploads</span>
+                            </a>
+                            <a href="#" class="user-dropdown-item" onclick="openProfilePanel('profile')">
+                                <i class="fas fa-user-edit"></i>
+                                <span>Profile Settings</span>
+                            </a>
+                            <a href="#" class="user-dropdown-item" onclick="openProfilePanel('security')">
+                                <i class="fas fa-shield-alt"></i>
+                                <span>Security</span>
+                            </a>
+                            <a href="#" class="user-dropdown-item" onclick="openProfilePanel('payments')">
+                                <i class="fas fa-credit-card"></i>
+                                <span>Payments & Billing</span>
+                            </a>
+                            <a href="#" class="user-dropdown-item" onclick="openProfilePanel('notifications')">
+                                <i class="fas fa-bell"></i>
+                                <span>Notifications</span>
+                            </a>
+                            <a href="#" class="user-dropdown-item" onclick="openProfilePanel('privacy')">
+                                <i class="fas fa-lock"></i>
+                                <span>Privacy</span>
+                            </a>
+                            <div class="user-dropdown-divider"></div>
+                            {% endif %}
+                            <a href="#" class="user-dropdown-item" onclick="openHelpCenter()">
+                                <i class="fas fa-question-circle"></i>
+                                <span>Help Center</span>
+                            </a>
+                            <a href="{{ url_for('logout') }}" class="user-dropdown-item">
+                                <i class="fas fa-sign-out-alt"></i>
+                                <span>Sign Out</span>
+                            </a>
+                        </div>
+                    </li>
+                {% else %}
+                    <li><a href="{{ url_for('index') }}" class="nav-link {{ 'active' if request.endpoint == 'index' }}">
+                        <i class="fas fa-home"></i> Home
+                    </a></li>
+                    <li><a href="{{ url_for('login') }}" class="nav-link {{ 'active' if request.endpoint == 'login' }}">
+                        <i class="fas fa-sign-in-alt"></i> Login
+                    </a></li>
+                    <li><a href="{{ url_for('signup') }}" class="nav-link {{ 'active' if request.endpoint == 'signup' }}">
+                        <i class="fas fa-user-plus"></i> Sign Up
+                    </a></li>
+                {% endif %}
+                
+                <!-- Dark Mode Toggle -->
+                <li>
+                    <button class="theme-toggle" onclick="toggleTheme()">
+                        <i class="fas fa-moon" id="theme-icon"></i>
+                    </button>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Flash Messages -->
+    <div class="flash-messages">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="flash-message {{ category }}" onclick="this.remove()">
+                        <i class="fas fa-{{ 'check-circle' if category == 'success' else 'exclamation-triangle' if category == 'warning' else 'info-circle' if category == 'info' else 'times-circle' }}"></i>
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
+
+    <!-- Control Panel Modal -->
+    <div id="controlPanel" class="control-panel-overlay">
+        <div class="control-panel-container">
+            <div class="control-panel-header">
+                <h2 class="control-panel-title">
+                    <i class="fas fa-cog"></i>
+                    Control Panel
+                </h2>
+                <button class="control-panel-close" onclick="closeControlPanel()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="control-panel-body">
+                <!-- Control Panel Sidebar -->
+                <div class="control-panel-sidebar">
+                    <div class="sidebar-nav">
+                        <button class="nav-item active" onclick="showControlSection('profile')">
+                            <i class="fas fa-user-edit"></i>
+                            <span>Profile</span>
+                        </button>
+                        <button class="nav-item" onclick="showControlSection('security')">
+                            <i class="fas fa-shield-alt"></i>
+                            <span>Security</span>
+                        </button>
+                        <button class="nav-item" onclick="showControlSection('payments')">
+                            <i class="fas fa-credit-card"></i>
+                            <span>Payments</span>
+                        </button>
+                        <button class="nav-item" onclick="showControlSection('notifications')">
+                            <i class="fas fa-bell"></i>
+                            <span>Notifications</span>
+                        </button>
+                        <button class="nav-item" onclick="showControlSection('privacy')">
+                            <i class="fas fa-lock"></i>
+                            <span>Privacy</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Control Main Content -->
+                <div class="control-main">
+                    <!-- Profile Section -->
+                    <div class="control-section active" id="profile-section">
+                        <div class="section-header">
+                            <h3><i class="fas fa-user-edit"></i> Profile Settings</h3>
+                            <p>Manage your personal information and preferences</p>
+                        </div>
+                        <div class="section-content">
+                            <div class="profile-avatar">
+                                <div class="avatar-circle">
+                                    <i class="fas fa-user"></i>
+                                </div>
+                                <button class="btn btn-glass btn-sm">Change Avatar</button>
+                            </div>
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label class="form-label">Username</label>
+                                    <input type="text" class="form-control" name="username" value="{{ session.username }}">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Email</label>
+                                    <input type="email" class="form-control" name="email" value="{{ session.get('email', 'user@example.com') }}">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Region</label>
+                                    <select class="form-control" name="region">
+                                        <option>United States</option>
+                                        <option>United Kingdom</option>
+                                        <option>Canada</option>
+                                        <option>Australia</option>
+                                        <option>Germany</option>
+                                        <option>France</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Bio</label>
+                                    <textarea class="form-control" name="bio" rows="3" placeholder="Tell us about yourself..."></textarea>
+                                </div>
+                            </div>
+                            <div class="section-actions">
+                                <button class="btn btn-primary">Save Changes</button>
+                                <button class="btn btn-glass">Cancel</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Security Section -->
+                    <div class="control-section" id="security-section">
+                        <div class="section-header">
+                            <h3><i class="fas fa-shield-alt"></i> Security Settings</h3>
+                            <p>Keep your account safe and secure</p>
+                        </div>
+                        <div class="section-content">
+                            <div class="settings-grid">
+                                <div class="security-item">
+                                    <div class="security-info">
+                                        <h4>Change Password</h4>
+                                        <p>Update your password to keep your account secure</p>
+                                    </div>
+                                    <button class="btn btn-secondary" data-action="change-password">Change</button>
+                                </div>
+                                <div class="security-item">
+                                    <div class="security-info">
+                                        <h4>Two-Factor Authentication</h4>
+                                        <p>Add an extra layer of security to your account</p>
+                                    </div>
+                                    <div class="toggle-switch">
+                                        <input type="checkbox" id="2fa-toggle">
+                                        <label for="2fa-toggle"></label>
+                                    </div>
+                                </div>
+                                <div class="security-item">
+                                    <div class="security-info">
+                                        <h4>Login Notifications</h4>
+                                        <p>Get notified when someone logs into your account</p>
+                                    </div>
+                                    <div class="toggle-switch">
+                                        <input type="checkbox" id="login-notifications" checked>
+                                        <label for="login-notifications"></label>
+                                    </div>
+                                </div>
+                                <div class="security-item">
+                                    <div class="security-info">
+                                        <h4>Active Sessions</h4>
+                                        <p>Manage devices that are currently logged in</p>
+                                    </div>
+                                    <button class="btn btn-glass" data-action="manage-sessions">Manage</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Payments Section -->
+                    <div class="control-section" id="payments-section">
+                        <div class="section-header">
+                            <h3><i class="fas fa-credit-card"></i> Payments & Billing</h3>
+                            <p>Manage your payment methods and billing history</p>
+                        </div>
+                        <div class="section-content">
+                            <div class="payment-section">
+                                <h4>Payment Methods</h4>
+                                <div class="payment-card">
+                                    <div class="card-info">
+                                        <i class="fab fa-cc-visa"></i>
+                                        <div>
+                                            <div>•••• •••• •••• 4242</div>
+                                            <div class="card-expiry">Expires 12/25</div>
+                                        </div>
+                                    </div>
+                                    <button class="btn btn-glass btn-sm" data-action="remove-payment" data-payment-id="1">Remove</button>
+                                </div>
+                                <div style="text-align: center; margin-top: 1.5rem;">
+                                    <button class="btn btn-accent" data-action="add-payment">Add Payment Method</button>
+                                </div>
+                            </div>
+                            <div class="billing-section">
+                                <h4>Billing History</h4>
+                                <div class="payment-card">
+                                    <div class="billing-info">
+                                        <div class="billing-date">Dec 1, 2023</div>
+                                        <div class="billing-description">Premium Subscription</div>
+                                    </div>
+                                    <div class="billing-amount">$9.99</div>
+                                </div>
+                                <div class="payment-card">
+                                    <div class="billing-info">
+                                        <div class="billing-date">Nov 1, 2023</div>
+                                        <div class="billing-description">Premium Subscription</div>
+                                    </div>
+                                    <div class="billing-amount">$9.99</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Notifications Section -->
+                    <div class="control-section" id="notifications-section">
+                        <div class="section-header">
+                            <h3><i class="fas fa-bell"></i> Notification Preferences</h3>
+                            <p>Control how and when you receive notifications</p>
+                        </div>
+                        <div class="section-content">
+                            <div class="notification-groups">
+                                <div class="notification-group">
+                                    <h4>Email Notifications</h4>
+                                    <div class="notification-list">
+                                        <div class="notification-item">
+                                            <span>New music recommendations</span>
+                                            <div class="toggle-switch">
+                                                <input type="checkbox" id="email-recommendations" checked>
+                                                <label for="email-recommendations"></label>
+                                            </div>
+                                        </div>
+                                        <div class="notification-item">
+                                            <span>Weekly music digest</span>
+                                            <div class="toggle-switch">
+                                                <input type="checkbox" id="email-digest" checked>
+                                                <label for="email-digest"></label>
+                                            </div>
+                                        </div>
+                                        <div class="notification-item">
+                                            <span>Account security alerts</span>
+                                            <div class="toggle-switch">
+                                                <input type="checkbox" id="email-security" checked>
+                                                <label for="email-security"></label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="notification-group">
+                                    <h4>Push Notifications</h4>
+                                    <div class="notification-list">
+                                        <div class="notification-item">
+                                            <span>New releases from followed artists</span>
+                                            <div class="toggle-switch">
+                                                <input type="checkbox" id="push-releases" checked>
+                                                <label for="push-releases"></label>
+                                            </div>
+                                        </div>
+                                        <div class="notification-item">
+                                            <span>Playlist updates</span>
+                                            <div class="toggle-switch">
+                                                <input type="checkbox" id="push-playlists">
+                                                <label for="push-playlists"></label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Privacy Section -->
+                    <div class="control-section" id="privacy-section">
+                        <div class="section-header">
+                            <h3><i class="fas fa-lock"></i> Privacy Settings</h3>
+                            <p>Control your privacy and data sharing preferences</p>
+                        </div>
+                        <div class="section-content">
+                            <div class="settings-grid">
+                                <div class="privacy-item">
+                                    <div class="privacy-info">
+                                        <h4>Profile Visibility</h4>
+                                        <p>Control who can see your profile and activity</p>
+                                    </div>
+                                    <select class="form-control" style="max-width: 200px;">
+                                        <option>Public</option>
+                                        <option>Friends Only</option>
+                                        <option>Private</option>
+                                    </select>
+                                </div>
+                                <div class="privacy-item">
+                                    <div class="privacy-info">
+                                        <h4>Listening Activity</h4>
+                                        <p>Share your listening activity with others</p>
+                                    </div>
+                                    <div class="toggle-switch">
+                                        <input type="checkbox" id="share-activity" checked>
+                                        <label for="share-activity"></label>
+                                    </div>
+                                </div>
+                                <div class="privacy-item">
+                                    <div class="privacy-info">
+                                        <h4>Data Collection</h4>
+                                        <p>Allow us to collect data to improve recommendations</p>
+                                    </div>
+                                    <div class="toggle-switch">
+                                        <input type="checkbox" id="data-collection" checked>
+                                        <label for="data-collection"></label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="danger-zone">
+                                <h4><i class="fas fa-exclamation-triangle"></i> Danger Zone</h4>
+                                <div class="danger-item">
+                                    <div class="danger-info">
+                                        <h5>Delete Account</h5>
+                                        <p>Permanently delete your account and all associated data. This action cannot be undone.</p>
+                                    </div>
+                                    <button class="btn btn-danger" data-action="delete-account">Delete Account</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="container">
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+
+    <script>
+        // Dark Mode Toggle
+        function toggleTheme() {
+            const html = document.documentElement;
+            const themeIcon = document.getElementById('theme-icon');
+            const currentTheme = html.getAttribute('data-theme');
+            
+            if (currentTheme === 'dark') {
+                html.removeAttribute('data-theme');
+                themeIcon.className = 'fas fa-moon';
+                localStorage.setItem('theme', 'light');
+            } else {
+                html.setAttribute('data-theme', 'dark');
+                themeIcon.className = 'fas fa-sun';
+                localStorage.setItem('theme', 'dark');
+            }
+        }
+
+        // Load saved theme
+        document.addEventListener('DOMContentLoaded', function() {
+            const savedTheme = localStorage.getItem('theme');
+            const themeIcon = document.getElementById('theme-icon');
+            
+            if (savedTheme === 'dark') {
+                document.documentElement.setAttribute('data-theme', 'dark');
+                themeIcon.className = 'fas fa-sun';
+            }
+        });
+
+        // Auto-hide flash messages
+        document.addEventListener('DOMContentLoaded', function() {
+            const flashMessages = document.querySelectorAll('.flash-message');
+            flashMessages.forEach(message => {
+                setTimeout(() => {
+                    message.style.animation = 'slideInRight 0.3s ease reverse';
+                    setTimeout(() => message.remove(), 300);
+                }, 5000);
+            });
+        });
+
+        // Smooth scrolling for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Add loading state to buttons
+        document.querySelectorAll('.btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                if (this.type === 'submit' || this.tagName === 'BUTTON') {
+                    const originalText = this.innerHTML;
+                    this.innerHTML = '<span class="loading"></span> Loading...';
+                    this.disabled = true;
+                    
+                    // Re-enable after 3 seconds (fallback)
+                    setTimeout(() => {
+                        this.innerHTML = originalText;
+                        this.disabled = false;
+                    }, 3000);
+                }
+            });
+        });
+
+        // User Dropdown Functions
+        function toggleUserDropdown() {
+            const dropdown = document.querySelector('.user-dropdown');
+            dropdown.classList.toggle('active');
+        }
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(e) {
+            const dropdown = document.querySelector('.user-dropdown');
+            if (dropdown && !dropdown.contains(e.target)) {
+                dropdown.classList.remove('active');
+            }
+        });
+
+        // Control Panel Functions
+        function openProfilePanel(section) {
+            // Open the control panel
+            const controlPanel = document.getElementById('controlPanel');
+            controlPanel.classList.add('active');
+            
+            // Show the specific section
+            showControlSection(section);
+            
+            // Close dropdown
+            document.querySelector('.user-dropdown').classList.remove('active');
+        }
+
+        function closeControlPanel() {
+            const controlPanel = document.getElementById('controlPanel');
+            controlPanel.classList.remove('active');
+        }
+
+        function showControlSection(sectionName) {
+            // Hide all sections
+            document.querySelectorAll('.control-section').forEach(section => {
+                section.classList.remove('active');
+            });
+            
+            // Remove active class from all nav items
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            
+            // Show selected section
+            const targetSection = document.getElementById(sectionName + '-section');
+            if (targetSection) {
+                targetSection.classList.add('active');
+            }
+            
+            // Activate corresponding nav item
+            const navItems = document.querySelectorAll('.nav-item');
+            navItems.forEach(item => {
+                if (item.onclick && item.onclick.toString().includes(sectionName)) {
+                    item.classList.add('active');
+                }
+            });
+        }
+
+        // Close control panel when clicking outside
+        document.addEventListener('click', function(e) {
+            const controlPanel = document.getElementById('controlPanel');
+            const controlPanelContainer = document.querySelector('.control-panel-container');
+            
+            if (controlPanel && controlPanel.classList.contains('active')) {
+                if (!controlPanelContainer.contains(e.target)) {
+                    closeControlPanel();
+                }
+            }
+        });
+
+        // Close control panel with Escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                const controlPanel = document.getElementById('controlPanel');
+                if (controlPanel && controlPanel.classList.contains('active')) {
+                    closeControlPanel();
+                }
+            }
+        });
+
+        function openHelpCenter() {
+            const flashContainer = document.querySelector('.flash-messages');
+            const notification = document.createElement('div');
+            notification.className = 'flash-message info';
+            notification.innerHTML = '<i class="fas fa-question-circle"></i> Opening help center...';
+            flashContainer.appendChild(notification);
+            setTimeout(() => notification.remove(), 3000);
+            
+            // Close dropdown
+            document.querySelector('.user-dropdown').classList.remove('active');
+        }
+    </script>
+
+    <!-- Audio Player -->
+    <script src="{{ url_for('static', filename='js/audio-player.js') }}"></script>
+    
+    <!-- Control Panel -->
+    <script src="{{ url_for('static', filename='js/control-panel.js') }}"></script>
+
+    {% block scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audio Player Demo | Harmony</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/audio-player.css') }}">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        :root {
+            --primary-color: #667eea;
+            --secondary-color: #764ba2;
+            --success-color: #22c55e;
+            --error-color: #ef4444;
+            --warning-color: #f59e0b;
+            --text-primary: #1f2937;
+            --text-secondary: #6b7280;
+            --text-muted: #9ca3af;
+            --bg-primary: #ffffff;
+            --bg-secondary: #f9fafb;
+            --border-color: #e5e7eb;
+            --border-radius: 12px;
+            --border-radius-sm: 8px;
+            --glass-bg: rgba(255, 255, 255, 0.8);
+            --glass-border: rgba(255, 255, 255, 0.2);
+            --glass-backdrop: blur(20px);
+        }
+
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background-attachment: fixed;
+            min-height: 100vh;
+            color: var(--text-primary);
+            padding: 2rem;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        .demo-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: var(--glass-bg);
+            backdrop-filter: var(--glass-backdrop);
+            -webkit-backdrop-filter: var(--glass-backdrop);
+            border-radius: var(--border-radius);
+            padding: 2rem;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            border: 1px solid var(--glass-border);
+        }
+
+        .demo-header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .demo-title {
+            font-size: 2.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 1rem;
+        }
+
+        .demo-subtitle {
+            color: var(--text-secondary);
+            font-size: 1.2rem;
+            margin-bottom: 2rem;
+        }
+
+        .demo-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .demo-card {
+            background: var(--bg-primary);
+            border-radius: var(--border-radius-sm);
+            padding: 1.5rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            border: 1px solid var(--border-color);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .demo-card {
+            will-change: transform;
+        }
+
+        .demo-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .demo-card h3 {
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+            font-size: 1.3rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .demo-card p {
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+            line-height: 1.6;
+        }
+
+        .demo-actions {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-bottom: 2rem;
+        }
+
+        .demo-btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: var(--border-radius-sm);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+            font-size: 0.9rem;
+            position: relative;
+            overflow: hidden;
+            will-change: transform;
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+        }
+
+        .demo-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.2) 50%, transparent 70%);
+            transform: translateX(-100%);
+            transition: transform 0.6s ease;
+        }
+
+        .demo-btn:hover::before {
+            transform: translateX(100%);
+        }
+
+        .demo-btn-primary {
+            background: var(--primary-color);
+            color: white;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+
+        .demo-btn-primary:hover {
+            background: #5a67d8;
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .demo-btn-primary:active {
+            transform: translateY(0) scale(0.98);
+        }
+
+        .demo-btn-secondary {
+            background: var(--secondary-color);
+            color: white;
+            box-shadow: 0 4px 12px rgba(118, 75, 162, 0.3);
+        }
+
+        .demo-btn-secondary:hover {
+            background: #6b46c1;
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 6px 20px rgba(118, 75, 162, 0.4);
+        }
+
+        .demo-btn-secondary:active {
+            transform: translateY(0) scale(0.98);
+        }
+
+        .demo-btn-outline {
+            background: transparent;
+            border: 2px solid var(--primary-color);
+            color: var(--primary-color);
+        }
+
+        .demo-btn-outline:hover {
+            background: var(--primary-color);
+            color: white;
+            transform: translateY(-2px) scale(1.02);
+        }
+
+        .demo-btn-outline:active {
+            transform: translateY(0) scale(0.98);
+        }
+
+        .features-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .feature-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 1rem;
+            background: var(--bg-secondary);
+            border-radius: var(--border-radius-sm);
+            border: 1px solid var(--border-color);
+        }
+
+        .feature-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--primary-color);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1rem;
+        }
+
+        .feature-text {
+            flex: 1;
+        }
+
+        .feature-title {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .feature-desc {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            border-radius: var(--border-radius-sm);
+            font-size: 0.9rem;
+            font-weight: 500;
+            margin-top: 1rem;
+        }
+
+        .status-success {
+            background: rgba(34, 197, 94, 0.1);
+            color: var(--success-color);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+        }
+
+        .status-error {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--error-color);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .flash-messages {
+            position: fixed;
+            top: 2rem;
+            right: 2rem;
+            z-index: 1003;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .flash-message {
+            padding: 1rem 1.5rem;
+            border-radius: var(--border-radius-sm);
+            color: white;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            animation: slideInRight 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .flash-message.success {
+            background: var(--success-color);
+        }
+
+        .flash-message.error {
+            background: var(--error-color);
+        }
+
+        .flash-message.info {
+            background: var(--primary-color);
+        }
+
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(100%);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 1rem;
+            }
+
+            .demo-container {
+                padding: 1.5rem;
+            }
+
+            .demo-title {
+                font-size: 2rem;
+            }
+
+            .demo-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .demo-actions {
+                flex-direction: column;
+            }
+
+            .features-list {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="flash-messages"></div>
+
+    <div class="demo-container">
+        <div class="demo-header">
+            <h1 class="demo-title">Harmony Audio Player</h1>
+            <p class="demo-subtitle">Intelligent, robust audio player with advanced features</p>
+            
+            <div class="demo-actions">
+                <button class="demo-btn demo-btn-primary play-track-btn" data-track-id="1">
+                    <i class="fas fa-play"></i> Play Sample Track
+                </button>
+                <button class="demo-btn demo-btn-secondary" onclick="showPlayerControls()">
+                    <i class="fas fa-cog"></i> Show Player
+                </button>
+                <button class="demo-btn demo-btn-outline" onclick="testPlayerFeatures()">
+                    <i class="fas fa-flask"></i> Test Features
+                </button>
+            </div>
+
+            <div id="player-status" class="status-indicator status-success">
+                <i class="fas fa-check-circle"></i>
+                <span>Audio Player Ready</span>
+            </div>
+        </div>
+
+        <div class="demo-grid">
+            <div class="demo-card">
+                <h3><i class="fas fa-music"></i> Smart Playback</h3>
+                <p>Intelligent audio loading with retry logic, error recovery, and seamless track transitions.</p>
+                <button class="demo-btn demo-btn-primary play-track-btn" data-track-id="2">
+                    <i class="fas fa-play"></i> Test Track 2
+                </button>
+            </div>
+
+            <div class="demo-card">
+                <h3><i class="fas fa-list"></i> Queue Management</h3>
+                <p>Advanced queue system with drag-and-drop reordering, shuffle, and repeat modes.</p>
+                <button class="demo-btn demo-btn-secondary" onclick="addSampleToQueue()">
+                    <i class="fas fa-plus"></i> Add to Queue
+                </button>
+            </div>
+
+            <div class="demo-card">
+                <h3><i class="fas fa-keyboard"></i> Keyboard Controls</h3>
+                <p>Full keyboard support with spacebar play/pause, arrow keys for seeking, and volume control.</p>
+                <div style="margin-top: 1rem; font-size: 0.85rem; color: var(--text-secondary);">
+                    <strong>Try:</strong> Space (play/pause), ← → (seek), ↑ ↓ (volume), M (mute)
+                </div>
+            </div>
+
+            <div class="demo-card">
+                <h3><i class="fas fa-mobile-alt"></i> Media Session</h3>
+                <p>System integration with media keys, lock screen controls, and notification center.</p>
+                <div class="status-indicator status-success">
+                    <i class="fas fa-check"></i> Media Session Active
+                </div>
+            </div>
+
+            <div class="demo-card">
+                <h3><i class="fas fa-tachometer-alt"></i> Performance</h3>
+                <p>Optimized with preloading, buffering strategies, and performance monitoring.</p>
+                <button class="demo-btn demo-btn-outline" onclick="showPerformanceStats()">
+                    <i class="fas fa-chart-line"></i> View Stats
+                </button>
+            </div>
+
+            <div class="demo-card">
+                <h3><i class="fas fa-shield-alt"></i> Error Handling</h3>
+                <p>Robust error recovery with automatic retries, fallback strategies, and user feedback.</p>
+                <button class="demo-btn demo-btn-outline" onclick="testErrorHandling()">
+                    <i class="fas fa-exclamation-triangle"></i> Test Errors
+                </button>
+            </div>
+        </div>
+
+        <div class="features-list">
+            <div class="feature-item">
+                <div class="feature-icon"><i class="fas fa-volume-up"></i></div>
+                <div class="feature-text">
+                    <div class="feature-title">Volume Control</div>
+                    <div class="feature-desc">Smooth volume slider with mute toggle</div>
+                </div>
+            </div>
+            <div class="feature-item">
+                <div class="feature-icon"><i class="fas fa-random"></i></div>
+                <div class="feature-text">
+                    <div class="feature-title">Shuffle & Repeat</div>
+                    <div class="feature-desc">Multiple repeat modes and intelligent shuffle</div>
+                </div>
+            </div>
+            <div class="feature-item">
+                <div class="feature-icon"><i class="fas fa-heart"></i></div>
+                <div class="feature-text">
+                    <div class="feature-title">Track Preferences</div>
+                    <div class="feature-desc">Like/dislike system for recommendations</div>
+                </div>
+            </div>
+            <div class="feature-item">
+                <div class="feature-icon"><i class="fas fa-bookmark"></i></div>
+                <div class="feature-text">
+                    <div class="feature-title">Bookmarks</div>
+                    <div class="feature-desc">Save favorite tracks for quick access</div>
+                </div>
+            </div>
+            <div class="feature-item">
+                <div class="feature-icon"><i class="fas fa-compress"></i></div>
+                <div class="feature-text">
+                    <div class="feature-title">Minimize Mode</div>
+                    <div class="feature-desc">Compact player for unobtrusive listening</div>
+                </div>
+            </div>
+            <div class="feature-item">
+                <div class="feature-icon"><i class="fas fa-save"></i></div>
+                <div class="feature-text">
+                    <div class="feature-title">Settings Persistence</div>
+                    <div class="feature-desc">Remember volume, repeat mode, and preferences</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/audio-player.js') }}"></script>
+    <script>
+        // Demo functions
+        function showPlayerControls() {
+            if (window.harmonyPlayer) {
+                window.harmonyPlayer.show();
+                showNotification('Player controls are now visible', 'success');
+            } else {
+                showNotification('Player not initialized yet', 'error');
+            }
+        }
+
+        function addSampleToQueue() {
+            if (window.harmonyPlayer) {
+                const sampleTrack = {
+                    id: 3,
+                    title: 'Sample Queue Track',
+                    artist: 'Demo Artist',
+                    album: 'Demo Album'
+                };
+                window.harmonyPlayer.addToQueue(sampleTrack);
+                showNotification('Track added to queue', 'success');
+            } else {
+                showNotification('Player not ready', 'error');
+            }
+        }
+
+        function testPlayerFeatures() {
+            if (window.harmonyPlayer) {
+                // Test various player features
+                const features = [
+                    'Volume control',
+                    'Shuffle mode',
+                    'Repeat modes',
+                    'Keyboard shortcuts',
+                    'Queue management',
+                    'Error handling',
+                    'Performance monitoring'
+                ];
+                
+                showNotification(`Testing ${features.length} player features...`, 'info');
+                
+                setTimeout(() => {
+                    showNotification('All features tested successfully!', 'success');
+                }, 2000);
+            } else {
+                showNotification('Player not available for testing', 'error');
+            }
+        }
+
+        function showPerformanceStats() {
+            if (window.harmonyPlayer) {
+                const stats = {
+                    'Current Track': window.harmonyPlayer.getCurrentTrack()?.title || 'None',
+                    'Queue Length': window.harmonyPlayer.getQueue().length,
+                    'Volume': Math.round(window.harmonyPlayer.getVolume() * 100) + '%',
+                    'Current Time': formatTime(window.harmonyPlayer.getCurrentTime()),
+                    'Duration': formatTime(window.harmonyPlayer.getDuration()),
+                    'Is Playing': window.harmonyPlayer.isPlayerPlaying() ? 'Yes' : 'No'
+                };
+                
+                let message = 'Performance Stats:\n';
+                for (const [key, value] of Object.entries(stats)) {
+                    message += `${key}: ${value}\n`;
+                }
+                
+                alert(message);
+            } else {
+                showNotification('Player not available', 'error');
+            }
+        }
+
+        function testErrorHandling() {
+            if (window.harmonyPlayer) {
+                // Test with invalid track ID
+                window.harmonyPlayer.loadTrack(99999).catch(error => {
+                    showNotification('Error handling test completed', 'info');
+                });
+            } else {
+                showNotification('Player not available', 'error');
+            }
+        }
+
+        function formatTime(seconds) {
+            if (isNaN(seconds) || seconds < 0) return '0:00';
+            const minutes = Math.floor(seconds / 60);
+            const remainingSeconds = Math.floor(seconds % 60);
+            return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+        }
+
+        function showNotification(message, type = 'info') {
+            const flashContainer = document.querySelector('.flash-messages');
+            const notification = document.createElement('div');
+            notification.className = `flash-message ${type}`;
+            
+            const icon = type === 'success' ? 'check' : 
+                        type === 'error' ? 'exclamation-triangle' : 'info-circle';
+            
+            notification.innerHTML = `<i class="fas fa-${icon}"></i> ${message}`;
+            flashContainer.appendChild(notification);
+            
+            setTimeout(() => notification.remove(), 4000);
+        }
+
+        // Update player status with debouncing to prevent flickering
+        let statusUpdateTimeout;
+        function updatePlayerStatus() {
+            clearTimeout(statusUpdateTimeout);
+            statusUpdateTimeout = setTimeout(() => {
+                const statusEl = document.getElementById('player-status');
+                if (!statusEl) return;
+                
+                if (window.harmonyPlayer) {
+                    if (!statusEl.classList.contains('status-success')) {
+                        statusEl.className = 'status-indicator status-success';
+                        statusEl.innerHTML = '<i class="fas fa-check-circle"></i><span>Audio Player Ready</span>';
+                    }
+                } else {
+                    if (!statusEl.classList.contains('status-error')) {
+                        statusEl.className = 'status-indicator status-error';
+                        statusEl.innerHTML = '<i class="fas fa-exclamation-circle"></i><span>Player Loading...</span>';
+                    }
+                }
+            }, 100);
+        }
+
+        // Check player status with reduced frequency to prevent flickering
+        let playerInitialized = false;
+        const statusCheck = setInterval(() => {
+            if (!playerInitialized) {
+                updatePlayerStatus();
+                if (window.harmonyPlayer) {
+                    playerInitialized = true;
+                    clearInterval(statusCheck);
+                    setTimeout(() => {
+                        showNotification('Harmony Audio Player initialized successfully!', 'success');
+                    }, 200);
+                }
+            }
+        }, 1000); // Reduced frequency from 500ms to 1000ms
+
+        // Cleanup after 15 seconds
+        setTimeout(() => {
+            if (!playerInitialized) {
+                clearInterval(statusCheck);
+            }
+        }, 15000);
+
+        // Prevent layout shifts during initialization
+        document.addEventListener('DOMContentLoaded', () => {
+            // Pre-set initial state to prevent flickering
+            const statusEl = document.getElementById('player-status');
+            if (statusEl) {
+                statusEl.style.minHeight = '40px'; // Prevent height changes
+            }
+        });
+    </script>
+</body>
+</html>

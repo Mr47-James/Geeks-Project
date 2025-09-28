@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}Page Not Found{% endblock %}
+{% block content %}
+<div class="container py-5 text-center">
+    <h1 class="display-5 fw-bold">404</h1>
+    <p class="lead">The page you are looking for could not be found.</p>
+    <a class="btn btn-primary" href="{{ url_for('index') }}">Return to dashboard</a>
+</div>
+{% endblock %}

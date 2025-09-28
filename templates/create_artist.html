@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+
+{% block title %}Add New Artist - Music Manager{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="mb-4">
+            <i class="fas fa-user-plus"></i> Add New Artist
+        </h1>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-7 col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Artist Details</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Name *</label>
+                        <input type="text" class="form-control" id="name" name="name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="bio" class="form-label">Biography</label>
+                        <textarea class="form-control" id="bio" name="bio" rows="4" placeholder="Share background, achievements, or a short story."></textarea>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="genre" class="form-label">Primary Genre</label>
+                                <input type="text" class="form-control" id="genre" name="genre" placeholder="e.g., Rock, Pop, Jazz">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="country" class="form-label">Country</label>
+                                <input type="text" class="form-control" id="country" name="country" placeholder="e.g., United States">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('artists') }}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Cancel
+                        </a>
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-save"></i> Save Artist
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-5 col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-lightbulb"></i> Helpful Tips</h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled mb-0">
+                    <li class="mb-3">
+                        <i class="fas fa-check text-success"></i>
+                        Keep names consistent if the artist already exists in other systems.
+                    </li>
+                    <li class="mb-3">
+                        <i class="fas fa-check text-success"></i>
+                        Genre helps the recommendation engine surface similar artists.
+                    </li>
+                    <li class="mb-0">
+                        <i class="fas fa-check text-success"></i>
+                        Country metadata supports regional filtering and analytics.
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

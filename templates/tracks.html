@@ -1,0 +1,672 @@
+{% extends "base.html" %}
+
+{% block title %}Tracks Management | Harmony{% endblock %}
+
+{% block content %}
+<style>
+    .tracks-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+        animation: fadeInUp 0.8s ease;
+    }
+
+    .tracks-title {
+        font-size: 2.5rem;
+        font-weight: 800;
+        background: var(--primary);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .header-actions {
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+    }
+
+    .search-filters {
+        padding: 2rem;
+        margin-bottom: 2rem;
+        animation: fadeInUp 0.8s ease 0.2s both;
+    }
+
+    .filters-grid {
+        display: grid;
+        grid-template-columns: 2fr 1fr 1fr 1fr;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .filter-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .filter-label {
+        font-weight: 600;
+        color: var(--text-primary);
+        font-size: 0.9rem;
+    }
+
+    .filter-input {
+        padding: 0.75rem 1rem;
+        background: var(--glass-bg);
+        backdrop-filter: var(--glass-backdrop);
+        -webkit-backdrop-filter: var(--glass-backdrop);
+        border: 1px solid var(--glass-border);
+        border-radius: var(--border-radius-sm);
+        color: var(--text-primary);
+        transition: all 0.3s ease;
+    }
+
+    .filter-input:focus {
+        outline: none;
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .advanced-filters {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+    }
+
+    .filter-actions {
+        display: flex;
+        gap: 1rem;
+        justify-content: flex-end;
+        margin-top: 1rem;
+    }
+
+    .tracks-stats {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        padding: 1rem 0;
+        border-bottom: 1px solid var(--glass-border);
+        animation: fadeInUp 0.8s ease 0.4s both;
+    }
+
+    .tracks-count {
+        color: var(--text-secondary);
+        font-weight: 500;
+    }
+
+    .sort-controls {
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+    }
+
+    .sort-select {
+        padding: 0.5rem 1rem;
+        background: var(--glass-bg);
+        backdrop-filter: var(--glass-backdrop);
+        -webkit-backdrop-filter: var(--glass-backdrop);
+        border: 1px solid var(--glass-border);
+        border-radius: var(--border-radius-sm);
+        color: var(--text-primary);
+        cursor: pointer;
+    }
+
+    .tracks-grid {
+        display: grid;
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .track-card {
+        padding: 1.5rem;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        animation: fadeInUp 0.8s ease var(--delay, 0.6s) both;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .track-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 4px;
+        height: 100%;
+        background: var(--primary);
+        transform: scaleY(0);
+        transition: transform 0.3s ease;
+    }
+
+    .track-card:hover::before {
+        transform: scaleY(1);
+    }
+
+    .track-card:hover {
+        transform: translateX(8px);
+    }
+
+    .track-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 1rem;
+    }
+
+    .track-info {
+        flex: 1;
+    }
+
+    .track-title {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 0.25rem;
+    }
+
+    .track-artist {
+        color: var(--text-secondary);
+        font-weight: 500;
+        margin-bottom: 0.5rem;
+    }
+
+    .track-meta {
+        display: flex;
+        gap: 1rem;
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        flex-wrap: wrap;
+    }
+
+    .track-meta-item {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+
+    .track-actions {
+        display: flex;
+        gap: 0.5rem;
+        flex-shrink: 0;
+    }
+
+    .track-action {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        border: none;
+        background: var(--glass-bg);
+        backdrop-filter: var(--glass-backdrop);
+        -webkit-backdrop-filter: var(--glass-backdrop);
+        color: var(--text-primary);
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.9rem;
+    }
+
+    .track-action:hover {
+        transform: scale(1.1);
+        background: var(--primary);
+        color: white;
+    }
+
+    .track-action.danger:hover {
+        background: var(--danger);
+    }
+
+    .track-stats {
+        display: flex;
+        gap: 2rem;
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid var(--glass-border);
+    }
+
+    .track-stat {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.9rem;
+        color: var(--text-secondary);
+    }
+
+    .stat-icon {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background: var(--glass-bg);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.75rem;
+    }
+
+    .pagination {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 1rem;
+        margin-top: 2rem;
+        animation: fadeInUp 0.8s ease 0.8s both;
+    }
+
+    .pagination-info {
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+    }
+
+    .pagination-controls {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .pagination-btn {
+        padding: 0.5rem 1rem;
+        background: var(--glass-bg);
+        backdrop-filter: var(--glass-backdrop);
+        -webkit-backdrop-filter: var(--glass-backdrop);
+        border: 1px solid var(--glass-border);
+        border-radius: var(--border-radius-sm);
+        color: var(--text-primary);
+        text-decoration: none;
+        transition: all 0.3s ease;
+        font-weight: 500;
+    }
+
+    .pagination-btn:hover {
+        background: var(--primary);
+        color: white;
+        transform: translateY(-2px);
+    }
+
+    .pagination-btn.active {
+        background: var(--primary);
+        color: white;
+    }
+
+    .pagination-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        animation: fadeInUp 0.8s ease 0.6s both;
+    }
+
+    .empty-icon {
+        width: 80px;
+        height: 80px;
+        background: var(--glass-bg);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1.5rem;
+        font-size: 2rem;
+        color: var(--text-muted);
+    }
+
+    .empty-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 0.5rem;
+    }
+
+    .empty-message {
+        color: var(--text-secondary);
+        margin-bottom: 2rem;
+    }
+
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @media (max-width: 768px) {
+        .tracks-header {
+            flex-direction: column;
+            gap: 1rem;
+            align-items: stretch;
+        }
+
+        .filters-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .advanced-filters {
+            grid-template-columns: 1fr;
+        }
+
+        .tracks-stats {
+            flex-direction: column;
+            gap: 1rem;
+            align-items: stretch;
+        }
+
+        .track-header {
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .track-actions {
+            justify-content: flex-start;
+        }
+
+        .track-stats {
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+    }
+</style>
+
+<!-- Tracks Header -->
+<div class="tracks-header">
+    <h1 class="tracks-title">Tracks Management</h1>
+    <div class="header-actions">
+        <a href="{{ url_for('upload_tracks') }}" class="btn btn-primary">
+            <i class="fas fa-upload"></i>
+            Upload Tracks
+        </a>
+        <button class="btn btn-glass" onclick="toggleFilters()">
+            <i class="fas fa-filter"></i>
+            Filters
+        </button>
+    </div>
+</div>
+
+<!-- Search and Filters -->
+<div class="glass-card search-filters" id="filtersPanel">
+    <form method="GET" action="{{ url_for('tracks') }}">
+        <div class="filters-grid">
+            <div class="filter-group">
+                <label class="filter-label">Search Tracks</label>
+                <input type="text" name="search" value="{{ search }}" placeholder="Search by title, artist, or album..." class="filter-input">
+            </div>
+            <div class="filter-group">
+                <label class="filter-label">Genre</label>
+                <select name="genre" class="filter-input">
+                    <option value="">All Genres</option>
+                    {% for genre in genres %}
+                    <option value="{{ genre }}" {{ 'selected' if genre == genre_filter }}>{{ genre }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="filter-group">
+                <label class="filter-label">Sort By</label>
+                <select name="sort" class="filter-input">
+                    <option value="created_at" {{ 'selected' if sort_by == 'created_at' }}>Date Added</option>
+                    <option value="title" {{ 'selected' if sort_by == 'title' }}>Title</option>
+                    <option value="artist" {{ 'selected' if sort_by == 'artist' }}>Artist</option>
+                    <option value="album" {{ 'selected' if sort_by == 'album' }}>Album</option>
+                    <option value="play_count" {{ 'selected' if sort_by == 'play_count' }}>Popularity</option>
+                    <option value="likes" {{ 'selected' if sort_by == 'likes' }}>Likes</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label class="filter-label">Order</label>
+                <select name="order" class="filter-input">
+                    <option value="desc" {{ 'selected' if sort_order == 'desc' }}>Descending</option>
+                    <option value="asc" {{ 'selected' if sort_order == 'asc' }}>Ascending</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="advanced-filters">
+            <div class="filter-group">
+                <label class="filter-label">Min Popularity</label>
+                <input type="number" name="min_popularity" value="{{ min_popularity or '' }}" placeholder="0" class="filter-input">
+            </div>
+            <div class="filter-group">
+                <label class="filter-label">Min Likes</label>
+                <input type="number" name="min_likes" value="{{ min_likes or '' }}" placeholder="0" class="filter-input">
+            </div>
+        </div>
+        
+        <div class="filter-actions">
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-search"></i>
+                Apply Filters
+            </button>
+            <a href="{{ url_for('tracks') }}" class="btn btn-glass">
+                <i class="fas fa-times"></i>
+                Clear
+            </a>
+        </div>
+    </form>
+</div>
+
+<!-- Tracks Stats -->
+<div class="tracks-stats">
+    <div class="tracks-count">
+        Showing {{ tracks.items|length }} of {{ tracks.total }} tracks
+        {% if search or genre_filter %}
+        (filtered)
+        {% endif %}
+    </div>
+</div>
+
+<!-- Tracks Grid -->
+<div class="tracks-grid">
+    {% for track in tracks.items %}
+    <div class="glass-card track-card" style="--delay: {{ 0.6 + loop.index * 0.05 }}s">
+        <div class="track-header">
+            <div class="track-info">
+                <h3 class="track-title">{{ track.title }}</h3>
+                <div class="track-artist">{{ track.artist.name if track.artist else 'Unknown Artist' }}</div>
+                <div class="track-meta">
+                    {% if track.album %}
+                    <div class="track-meta-item">
+                        <i class="fas fa-compact-disc"></i>
+                        <span>{{ track.album }}</span>
+                    </div>
+                    {% endif %}
+                    {% if track.genre %}
+                    <div class="track-meta-item">
+                        <i class="fas fa-tag"></i>
+                        <span>{{ track.genre }}</span>
+                    </div>
+                    {% endif %}
+                    {% if track.duration %}
+                    <div class="track-meta-item">
+                        <i class="fas fa-clock"></i>
+                        <span>{{ track.format_duration() }}</span>
+                    </div>
+                    {% endif %}
+                    {% if track.release_year %}
+                    <div class="track-meta-item">
+                        <i class="fas fa-calendar"></i>
+                        <span>{{ track.release_year }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="track-actions">
+                <a href="{{ url_for('track_details', track_id=track.id) }}" class="track-action" title="View Details">
+                    <i class="fas fa-eye"></i>
+                </a>
+                <a href="{{ url_for('edit_track', track_id=track.id) }}" class="track-action" title="Edit Track">
+                    <i class="fas fa-edit"></i>
+                </a>
+                <button class="track-action danger" onclick="deleteTrack({{ track.id }}, '{{ track.title }}')" title="Delete Track">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+        </div>
+        
+        <div class="track-stats">
+            <div class="track-stat">
+                <div class="stat-icon" style="background: var(--primary);">
+                    <i class="fas fa-play"></i>
+                </div>
+                <span>{{ track.play_count }} plays</span>
+            </div>
+            <div class="track-stat">
+                <div class="stat-icon" style="background: var(--success);">
+                    <i class="fas fa-heart"></i>
+                </div>
+                <span>{{ track.like_count }} likes</span>
+            </div>
+            <div class="track-stat">
+                <div class="stat-icon" style="background: var(--danger);">
+                    <i class="fas fa-heart-broken"></i>
+                </div>
+                <span>{{ track.dislike_count }} dislikes</span>
+            </div>
+            {% if track.file_size %}
+            <div class="track-stat">
+                <div class="stat-icon" style="background: var(--accent);">
+                    <i class="fas fa-hdd"></i>
+                </div>
+                <span>{{ "%.1f"|format(track.file_size / 1024 / 1024) }} MB</span>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Empty State -->
+{% if not tracks.items %}
+<div class="empty-state">
+    <div class="empty-icon">
+        <i class="fas fa-music"></i>
+    </div>
+    <h3 class="empty-title">No tracks found</h3>
+    <p class="empty-message">
+        {% if search or genre_filter %}
+        Try adjusting your search criteria or filters.
+        {% else %}
+        Start by uploading some music to your library.
+        {% endif %}
+    </p>
+    <a href="{{ url_for('upload_tracks') }}" class="btn btn-primary">
+        <i class="fas fa-upload"></i>
+        Upload Your First Track
+    </a>
+</div>
+{% endif %}
+
+<!-- Pagination -->
+{% if tracks.pages > 1 %}
+<div class="pagination">
+    <div class="pagination-info">
+        Page {{ tracks.page }} of {{ tracks.pages }}
+    </div>
+    <div class="pagination-controls">
+        {% if tracks.has_prev %}
+        <a href="{{ url_for('tracks', page=tracks.prev_num, search=search, genre=genre_filter, sort=sort_by, order=sort_order, min_popularity=min_popularity, min_likes=min_likes) }}" class="pagination-btn">
+            <i class="fas fa-chevron-left"></i>
+        </a>
+        {% endif %}
+        
+        {% for page_num in tracks.iter_pages() %}
+        {% if page_num %}
+        {% if page_num != tracks.page %}
+        <a href="{{ url_for('tracks', page=page_num, search=search, genre=genre_filter, sort=sort_by, order=sort_order, min_popularity=min_popularity, min_likes=min_likes) }}" class="pagination-btn">{{ page_num }}</a>
+        {% else %}
+        <span class="pagination-btn active">{{ page_num }}</span>
+        {% endif %}
+        {% else %}
+        <span class="pagination-btn">…</span>
+        {% endif %}
+        {% endfor %}
+        
+        {% if tracks.has_next %}
+        <a href="{{ url_for('tracks', page=tracks.next_num, search=search, genre=genre_filter, sort=sort_by, order=sort_order, min_popularity=min_popularity, min_likes=min_likes) }}" class="pagination-btn">
+            <i class="fas fa-chevron-right"></i>
+        </a>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
+<script>
+    // Toggle filters panel
+    function toggleFilters() {
+        const panel = document.getElementById('filtersPanel');
+        const isVisible = panel.style.display !== 'none';
+        panel.style.display = isVisible ? 'none' : 'block';
+        
+        if (!isVisible) {
+            panel.style.animation = 'fadeInUp 0.3s ease';
+        }
+    }
+
+    // Delete track confirmation
+    function deleteTrack(trackId, trackTitle) {
+        if (confirm(`Are you sure you want to delete "${trackTitle}"? This action cannot be undone.`)) {
+            // Create form and submit
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = `/tracks/${trackId}/delete`;
+            
+            // Add CSRF token if needed
+            const csrfToken = document.querySelector('meta[name="csrf-token"]');
+            if (csrfToken) {
+                const tokenInput = document.createElement('input');
+                tokenInput.type = 'hidden';
+                tokenInput.name = 'csrf_token';
+                tokenInput.value = csrfToken.getAttribute('content');
+                form.appendChild(tokenInput);
+            }
+            
+            document.body.appendChild(form);
+            form.submit();
+        }
+    }
+
+    // Auto-submit search form on input
+    let searchTimeout;
+    document.querySelector('input[name="search"]').addEventListener('input', function() {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            this.form.submit();
+        }, 500);
+    });
+
+    // Add loading states to action buttons
+    document.querySelectorAll('.track-action').forEach(btn => {
+        btn.addEventListener('click', function() {
+            if (this.onclick) return; // Skip delete buttons
+            
+            const icon = this.querySelector('i');
+            const originalClass = icon.className;
+            icon.className = 'fas fa-spinner fa-spin';
+            
+            setTimeout(() => {
+                icon.className = originalClass;
+            }, 2000);
+        });
+    });
+
+    // Keyboard shortcuts
+    document.addEventListener('keydown', function(e) {
+        if (e.ctrlKey || e.metaKey) {
+            switch(e.key) {
+                case 'f':
+                    e.preventDefault();
+                    document.querySelector('input[name="search"]').focus();
+                    break;
+                case 'u':
+                    e.preventDefault();
+                    window.location.href = "{{ url_for('upload_tracks') }}";
+                    break;
+            }
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,958 @@
+{% extends "base.html" %}
+
+{% block title %}Upload Your Music | Harmony{% endblock %}
+
+{% block content %}
+<style>
+    .upload-header {
+        text-align: center;
+        margin-bottom: 3rem;
+        animation: fadeInUp 0.8s ease;
+    }
+
+    .upload-title {
+        font-size: 2.8rem;
+        font-weight: 800;
+        background: var(--primary);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: 0.5rem;
+    }
+
+    .upload-subtitle {
+        color: var(--text-secondary);
+        font-size: 1.2rem;
+        margin-bottom: 2rem;
+    }
+
+    .upload-info {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 3rem;
+        animation: fadeInUp 0.8s ease 0.2s both;
+    }
+
+    .info-card {
+        padding: 1.5rem;
+        text-align: center;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .info-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: var(--gradient, var(--primary));
+        border-radius: var(--border-radius) var(--border-radius) 0 0;
+    }
+
+    .info-card:hover {
+        transform: translateY(-5px) scale(1.02);
+    }
+
+    .info-icon {
+        width: 60px;
+        height: 60px;
+        background: var(--gradient, var(--primary));
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1rem;
+        color: white;
+        font-size: 1.5rem;
+        animation: pulse 2s infinite;
+    }
+
+    .info-title {
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 0.5rem;
+    }
+
+    .info-description {
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+        line-height: 1.5;
+    }
+
+    .upload-section {
+        margin-bottom: 3rem;
+        animation: fadeInUp 0.8s ease 0.4s both;
+    }
+
+    .upload-form {
+        padding: 2rem;
+    }
+
+    .file-drop-zone {
+        border: 2px dashed var(--glass-border);
+        border-radius: var(--border-radius);
+        padding: 3rem 2rem;
+        text-align: center;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        position: relative;
+        overflow: hidden;
+        margin-bottom: 2rem;
+    }
+
+    .file-drop-zone.dragover {
+        border-color: var(--primary);
+        background: rgba(102, 126, 234, 0.1);
+        transform: scale(1.02);
+    }
+
+    .file-drop-zone:hover {
+        border-color: var(--primary);
+        background: rgba(102, 126, 234, 0.05);
+    }
+
+    .drop-icon {
+        width: 80px;
+        height: 80px;
+        background: var(--primary);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1.5rem;
+        color: white;
+        font-size: 2rem;
+        animation: bounce 2s infinite;
+    }
+
+    .drop-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 0.5rem;
+    }
+
+    .drop-subtitle {
+        color: var(--text-secondary);
+        margin-bottom: 1.5rem;
+    }
+
+    .file-input {
+        display: none;
+    }
+
+    .file-button {
+        padding: 1rem 2rem;
+        background: var(--primary);
+        color: white;
+        border: none;
+        border-radius: var(--border-radius-sm);
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .file-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+    }
+
+    .file-formats {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        margin-top: 1rem;
+    }
+
+    .selected-files {
+        margin-top: 2rem;
+        display: none;
+    }
+
+    .selected-files.show {
+        display: block;
+    }
+
+    .files-list {
+        display: grid;
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .file-item {
+        padding: 1rem;
+        border-radius: var(--border-radius-sm);
+        background: var(--glass-bg);
+        backdrop-filter: var(--glass-backdrop);
+        -webkit-backdrop-filter: var(--glass-backdrop);
+        border: 1px solid var(--glass-border);
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        transition: all 0.3s ease;
+    }
+
+    .file-item:hover {
+        transform: translateX(5px);
+    }
+
+    .file-icon {
+        width: 40px;
+        height: 40px;
+        background: var(--secondary);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1rem;
+        flex-shrink: 0;
+    }
+
+    .file-info {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .file-name {
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 0.25rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .file-size {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+    }
+
+    .file-remove {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        border: none;
+        background: var(--danger);
+        color: white;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.8rem;
+    }
+
+    .file-remove:hover {
+        transform: scale(1.1);
+    }
+
+    .metadata-section {
+        margin-top: 2rem;
+        display: none;
+    }
+
+    .metadata-section.show {
+        display: block;
+    }
+
+    .metadata-form {
+        display: grid;
+        gap: 1.5rem;
+    }
+
+    .metadata-file {
+        padding: 1.5rem;
+        border-radius: var(--border-radius-sm);
+        background: var(--glass-bg);
+        backdrop-filter: var(--glass-backdrop);
+        -webkit-backdrop-filter: var(--glass-backdrop);
+        border: 1px solid var(--glass-border);
+    }
+
+    .metadata-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid var(--glass-border);
+    }
+
+    .metadata-icon {
+        width: 50px;
+        height: 50px;
+        background: var(--accent);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.2rem;
+    }
+
+    .metadata-title {
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 0.25rem;
+    }
+
+    .metadata-subtitle {
+        font-size: 0.9rem;
+        color: var(--text-secondary);
+    }
+
+    .metadata-fields {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .form-label {
+        font-weight: 600;
+        color: var(--text-primary);
+        font-size: 0.9rem;
+    }
+
+    .form-input {
+        padding: 0.75rem 1rem;
+        background: var(--glass-bg);
+        backdrop-filter: var(--glass-backdrop);
+        -webkit-backdrop-filter: var(--glass-backdrop);
+        border: 1px solid var(--glass-border);
+        border-radius: var(--border-radius-sm);
+        color: var(--text-primary);
+        transition: all 0.3s ease;
+    }
+
+    .form-input:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .upload-actions {
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+        margin-top: 2rem;
+        flex-wrap: wrap;
+    }
+
+    .upload-button {
+        padding: 1rem 2rem;
+        background: var(--success);
+        color: white;
+        border: none;
+        border-radius: var(--border-radius-sm);
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 1.1rem;
+    }
+
+    .upload-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(34, 197, 94, 0.3);
+    }
+
+    .upload-button:disabled {
+        background: var(--text-muted);
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+    }
+
+    .clear-button {
+        padding: 1rem 2rem;
+        background: var(--glass-bg);
+        backdrop-filter: var(--glass-backdrop);
+        -webkit-backdrop-filter: var(--glass-backdrop);
+        border: 1px solid var(--glass-border);
+        color: var(--text-primary);
+        border-radius: var(--border-radius-sm);
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .clear-button:hover {
+        background: var(--danger);
+        color: white;
+        transform: translateY(-2px);
+    }
+
+    .progress-section {
+        margin-top: 2rem;
+        display: none;
+    }
+
+    .progress-section.show {
+        display: block;
+    }
+
+    .progress-bar {
+        width: 100%;
+        height: 8px;
+        background: var(--glass-bg);
+        border-radius: 4px;
+        overflow: hidden;
+        margin-bottom: 1rem;
+    }
+
+    .progress-fill {
+        height: 100%;
+        background: var(--success);
+        width: 0%;
+        transition: width 0.3s ease;
+    }
+
+    .progress-text {
+        text-align: center;
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+    }
+
+    .results-section {
+        margin-top: 2rem;
+        display: none;
+    }
+
+    .results-section.show {
+        display: block;
+    }
+
+    .result-item {
+        padding: 1rem;
+        border-radius: var(--border-radius-sm);
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .result-success {
+        background: rgba(34, 197, 94, 0.1);
+        border: 1px solid rgba(34, 197, 94, 0.3);
+        color: var(--success);
+    }
+
+    .result-error {
+        background: rgba(239, 68, 68, 0.1);
+        border: 1px solid rgba(239, 68, 68, 0.3);
+        color: var(--danger);
+    }
+
+    @keyframes pulse {
+        0%, 100% {
+            transform: scale(1);
+        }
+        50% {
+            transform: scale(1.05);
+        }
+    }
+
+    @keyframes bounce {
+        0%, 20%, 50%, 80%, 100% {
+            transform: translateY(0);
+        }
+        40% {
+            transform: translateY(-10px);
+        }
+        60% {
+            transform: translateY(-5px);
+        }
+    }
+
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @media (max-width: 768px) {
+        .upload-info {
+            grid-template-columns: 1fr;
+        }
+
+        .metadata-fields {
+            grid-template-columns: 1fr;
+        }
+
+        .upload-actions {
+            flex-direction: column;
+            align-items: center;
+        }
+    }
+</style>
+
+<!-- Upload Header -->
+<div class="upload-header">
+    <h1 class="upload-title">Upload Your Music</h1>
+    <p class="upload-subtitle">Share your original tracks with the Harmony community</p>
+</div>
+
+<!-- Upload Info Cards -->
+<div class="upload-info">
+    <div class="glass-card info-card" style="--gradient: var(--primary);">
+        <div class="info-icon">
+            <i class="fas fa-music"></i>
+        </div>
+        <div class="info-title">High Quality Audio</div>
+        <div class="info-description">Upload MP3, FLAC, WAV, AAC, M4A, or OGG files up to 50MB each</div>
+    </div>
+    
+    <div class="glass-card info-card" style="--gradient: var(--secondary);">
+        <div class="info-icon">
+            <i class="fas fa-magic"></i>
+        </div>
+        <div class="info-title">Auto Metadata</div>
+        <div class="info-description">We automatically extract track info from your files, but you can edit it</div>
+    </div>
+    
+    <div class="glass-card info-card" style="--gradient: var(--accent);">
+        <div class="info-icon">
+            <i class="fas fa-share"></i>
+        </div>
+        <div class="info-title">Instant Sharing</div>
+        <div class="info-description">Your tracks are immediately available to play and add to playlists</div>
+    </div>
+    
+    <div class="glass-card info-card" style="--gradient: var(--success);">
+        <div class="info-icon">
+            <i class="fas fa-shield-alt"></i>
+        </div>
+        <div class="info-title">Your Content</div>
+        <div class="info-description">You retain full ownership and control of your uploaded music</div>
+    </div>
+</div>
+
+<!-- Upload Section -->
+<div class="glass-card upload-section">
+    <form id="uploadForm" class="upload-form" enctype="multipart/form-data">
+        <!-- File Drop Zone -->
+        <div class="file-drop-zone" id="dropZone">
+            <div class="drop-icon">
+                <i class="fas fa-cloud-upload-alt"></i>
+            </div>
+            <div class="drop-title">Drop your music files here</div>
+            <div class="drop-subtitle">or click to browse and select files</div>
+            <button type="button" class="file-button" onclick="document.getElementById('fileInput').click()">
+                <i class="fas fa-folder-open"></i>
+                Choose Files
+            </button>
+            <input type="file" id="fileInput" name="files" class="file-input" multiple accept="audio/*,.mp3,.flac,.wav,.aac,.m4a,.ogg">
+            <div class="file-formats">
+                Supported formats: MP3, FLAC, WAV, AAC, M4A, OGG • Max 50MB per file
+            </div>
+        </div>
+
+        <!-- Selected Files -->
+        <div class="selected-files" id="selectedFiles">
+            <h3>Selected Files</h3>
+            <div class="files-list" id="filesList"></div>
+        </div>
+
+        <!-- Metadata Section -->
+        <div class="metadata-section" id="metadataSection">
+            <h3>Track Information</h3>
+            <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">
+                Review and edit the information for your tracks. We've pre-filled what we could detect from your files.
+            </p>
+            <div class="metadata-form" id="metadataForm"></div>
+        </div>
+
+        <!-- Upload Actions -->
+        <div class="upload-actions" id="uploadActions" style="display: none;">
+            <button type="button" class="clear-button" onclick="clearFiles()">
+                <i class="fas fa-trash"></i>
+                Clear All
+            </button>
+            <button type="submit" class="upload-button" id="uploadButton">
+                <i class="fas fa-upload"></i>
+                Upload Tracks
+            </button>
+        </div>
+
+        <!-- Progress Section -->
+        <div class="progress-section" id="progressSection">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <div class="progress-text" id="progressText">Uploading your tracks...</div>
+        </div>
+
+        <!-- Results Section -->
+        <div class="results-section" id="resultsSection">
+            <h3>Upload Results</h3>
+            <div id="resultsList"></div>
+            <div style="text-align: center; margin-top: 2rem;">
+                <a href="{{ url_for('client_my_uploads') }}" class="btn btn-primary">
+                    <i class="fas fa-music"></i>
+                    View My Uploads
+                </a>
+                <button type="button" class="btn btn-secondary" onclick="startNewUpload()" style="margin-left: 1rem;">
+                    <i class="fas fa-plus"></i>
+                    Upload More
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<script>
+    let selectedFiles = [];
+    let isUploading = false;
+
+    // DOM elements
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+    const selectedFilesDiv = document.getElementById('selectedFiles');
+    const filesList = document.getElementById('filesList');
+    const metadataSection = document.getElementById('metadataSection');
+    const metadataForm = document.getElementById('metadataForm');
+    const uploadActions = document.getElementById('uploadActions');
+    const progressSection = document.getElementById('progressSection');
+    const resultsSection = document.getElementById('resultsSection');
+    const uploadForm = document.getElementById('uploadForm');
+
+    // File drop functionality
+    dropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropZone.classList.add('dragover');
+    });
+
+    dropZone.addEventListener('dragleave', (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('dragover');
+    });
+
+    dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('dragover');
+        const files = Array.from(e.dataTransfer.files);
+        handleFiles(files);
+    });
+
+    dropZone.addEventListener('click', () => {
+        if (!isUploading) {
+            fileInput.click();
+        }
+    });
+
+    fileInput.addEventListener('change', (e) => {
+        const files = Array.from(e.target.files);
+        handleFiles(files);
+    });
+
+    // Handle selected files
+    function handleFiles(files) {
+        if (isUploading) return;
+
+        const audioFiles = files.filter(file => {
+            const extension = file.name.toLowerCase().split('.').pop();
+            return ['mp3', 'flac', 'wav', 'aac', 'm4a', 'ogg'].includes(extension);
+        });
+
+        if (audioFiles.length === 0) {
+            showNotification('Please select valid audio files', 'error');
+            return;
+        }
+
+        // Check file sizes
+        const oversizedFiles = audioFiles.filter(file => file.size > 50 * 1024 * 1024);
+        if (oversizedFiles.length > 0) {
+            showNotification(`Some files are too large (max 50MB): ${oversizedFiles.map(f => f.name).join(', ')}`, 'error');
+            return;
+        }
+
+        selectedFiles = [...selectedFiles, ...audioFiles];
+        updateFilesDisplay();
+        generateMetadataForms();
+        showUploadActions();
+    }
+
+    // Update files display
+    function updateFilesDisplay() {
+        if (selectedFiles.length === 0) {
+            selectedFilesDiv.classList.remove('show');
+            metadataSection.classList.remove('show');
+            uploadActions.style.display = 'none';
+            return;
+        }
+
+        selectedFilesDiv.classList.add('show');
+        filesList.innerHTML = '';
+
+        selectedFiles.forEach((file, index) => {
+            const fileItem = document.createElement('div');
+            fileItem.className = 'file-item';
+            fileItem.innerHTML = `
+                <div class="file-icon">
+                    <i class="fas fa-music"></i>
+                </div>
+                <div class="file-info">
+                    <div class="file-name">${file.name}</div>
+                    <div class="file-size">${formatFileSize(file.size)}</div>
+                </div>
+                <button type="button" class="file-remove" onclick="removeFile(${index})" title="Remove file">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+            filesList.appendChild(fileItem);
+        });
+    }
+
+    // Generate metadata forms
+    function generateMetadataForms() {
+        if (selectedFiles.length === 0) {
+            metadataSection.classList.remove('show');
+            return;
+        }
+
+        metadataSection.classList.add('show');
+        metadataForm.innerHTML = '';
+
+        selectedFiles.forEach((file, index) => {
+            const fileName = file.name.replace(/\.[^/.]+$/, ""); // Remove extension
+            const metadataDiv = document.createElement('div');
+            metadataDiv.className = 'metadata-file';
+            metadataDiv.innerHTML = `
+                <div class="metadata-header">
+                    <div class="metadata-icon">
+                        <i class="fas fa-music"></i>
+                    </div>
+                    <div>
+                        <div class="metadata-title">${file.name}</div>
+                        <div class="metadata-subtitle">${formatFileSize(file.size)}</div>
+                    </div>
+                </div>
+                <div class="metadata-fields">
+                    <div class="form-group">
+                        <label class="form-label">Track Title</label>
+                        <input type="text" name="title_${file.name}" class="form-input" value="${fileName}" placeholder="Enter track title">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Artist Name</label>
+                        <input type="text" name="artist_${file.name}" class="form-input" value="{{ session.username }}" placeholder="Enter artist name">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Album</label>
+                        <input type="text" name="album_${file.name}" class="form-input" placeholder="Enter album name (optional)">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Genre</label>
+                        <input type="text" name="genre_${file.name}" class="form-input" placeholder="Enter genre (optional)">
+                    </div>
+                </div>
+            `;
+            metadataForm.appendChild(metadataDiv);
+        });
+    }
+
+    // Show upload actions
+    function showUploadActions() {
+        if (selectedFiles.length > 0) {
+            uploadActions.style.display = 'flex';
+        }
+    }
+
+    // Remove file
+    function removeFile(index) {
+        if (isUploading) return;
+        selectedFiles.splice(index, 1);
+        updateFilesDisplay();
+        generateMetadataForms();
+        if (selectedFiles.length === 0) {
+            uploadActions.style.display = 'none';
+        }
+    }
+
+    // Clear all files
+    function clearFiles() {
+        if (isUploading) return;
+        selectedFiles = [];
+        fileInput.value = '';
+        updateFilesDisplay();
+        hideResults();
+    }
+
+    // Format file size
+    function formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
+    // Handle form submission
+    uploadForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        if (selectedFiles.length === 0) {
+            showNotification('Please select files to upload', 'error');
+            return;
+        }
+
+        if (isUploading) return;
+
+        isUploading = true;
+        showProgress();
+        
+        const formData = new FormData();
+        
+        // Add files
+        selectedFiles.forEach(file => {
+            formData.append('files', file);
+        });
+
+        // Add metadata
+        const formInputs = metadataForm.querySelectorAll('input');
+        formInputs.forEach(input => {
+            formData.append(input.name, input.value);
+        });
+
+        try {
+            const response = await fetch('/client/upload/process', {
+                method: 'POST',
+                body: formData
+            });
+
+            const result = await response.json();
+            hideProgress();
+            showResults(result);
+            
+        } catch (error) {
+            console.error('Upload error:', error);
+            hideProgress();
+            showNotification('Upload failed. Please try again.', 'error');
+        } finally {
+            isUploading = false;
+        }
+    });
+
+    // Show progress
+    function showProgress() {
+        progressSection.classList.add('show');
+        uploadActions.style.display = 'none';
+        
+        // Simulate progress (since we can't track real progress easily)
+        let progress = 0;
+        const progressFill = document.getElementById('progressFill');
+        const progressText = document.getElementById('progressText');
+        
+        const interval = setInterval(() => {
+            progress += Math.random() * 15;
+            if (progress > 90) progress = 90;
+            
+            progressFill.style.width = progress + '%';
+            progressText.textContent = `Uploading your tracks... ${Math.round(progress)}%`;
+        }, 500);
+
+        // Store interval to clear it later
+        progressSection.dataset.interval = interval;
+    }
+
+    // Hide progress
+    function hideProgress() {
+        const interval = progressSection.dataset.interval;
+        if (interval) {
+            clearInterval(interval);
+        }
+        
+        const progressFill = document.getElementById('progressFill');
+        progressFill.style.width = '100%';
+        
+        setTimeout(() => {
+            progressSection.classList.remove('show');
+        }, 500);
+    }
+
+    // Show results
+    function showResults(result) {
+        resultsSection.classList.add('show');
+        const resultsList = document.getElementById('resultsList');
+        resultsList.innerHTML = '';
+
+        // Show successful uploads
+        if (result.uploaded_tracks && result.uploaded_tracks.length > 0) {
+            result.uploaded_tracks.forEach(track => {
+                const resultItem = document.createElement('div');
+                resultItem.className = 'result-item result-success';
+                resultItem.innerHTML = `
+                    <i class="fas fa-check-circle"></i>
+                    <div>
+                        <strong>${track.title}</strong> by ${track.artist} uploaded successfully
+                    </div>
+                `;
+                resultsList.appendChild(resultItem);
+            });
+        }
+
+        // Show errors
+        if (result.errors && result.errors.length > 0) {
+            result.errors.forEach(error => {
+                const resultItem = document.createElement('div');
+                resultItem.className = 'result-item result-error';
+                resultItem.innerHTML = `
+                    <i class="fas fa-exclamation-circle"></i>
+                    <div>${error}</div>
+                `;
+                resultsList.appendChild(resultItem);
+            });
+        }
+
+        // Show summary notification
+        if (result.status === 'success') {
+            showNotification(result.message, 'success');
+        } else {
+            showNotification(result.message, 'error');
+        }
+    }
+
+    // Hide results
+    function hideResults() {
+        resultsSection.classList.remove('show');
+    }
+
+    // Start new upload
+    function startNewUpload() {
+        clearFiles();
+        hideResults();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // Show notification
+    function showNotification(message, type) {
+        const flashContainer = document.querySelector('.flash-messages');
+        const notification = document.createElement('div');
+        notification.className = `flash-message ${type}`;
+        notification.innerHTML = `<i class="fas fa-${type === 'success' ? 'check' : 'exclamation-triangle'}"></i> ${message}`;
+        flashContainer.appendChild(notification);
+        setTimeout(() => notification.remove(), 5000);
+    }
+</script>
+{% endblock %}

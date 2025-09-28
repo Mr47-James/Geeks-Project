@@ -1,0 +1,303 @@
+{% extends "base.html" %}
+{% block title %}Bulk Upload | Harmony{% endblock %}
+{% block content %}
+<div class="upload-page">
+    <section class="page-hero glass-card">
+        <div class="hero-copy">
+            <span class="eyebrow">Upload · Stage</span>
+            <h1>Bulk Audio Upload</h1>
+            <p>Drop in audio files or ZIP archives, validate formats instantly, and move into a guided review keeping Harmony’s flow intact.</p>
+        </div>
+        <div class="hero-actions">
+            <a class="harmony-button harmony-button--ghost" href="{{ url_for('index') }}">
+                <i class="fas fa-home"></i>
+                <span>Back to Dashboard</span>
+            </a>
+            <a class="harmony-button" href="{{ url_for('tracks') }}">
+                <i class="fas fa-table"></i>
+                <span>Catalog</span>
+            </a>
+        </div>
+    </section>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="alerts-stack">
+                {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible" role="alert">
+                    <span>{{ message }}</span>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <section class="upload-card glass-card">
+        <header class="upload-header">
+            <div>
+                <h2>Select Files</h2>
+                <p>Upload individual audio files (MP3, FLAC, WAV, OGG, AAC) or a ZIP bundle with mixed formats. Max 100 tracks per batch.</p>
+            </div>
+            <div class="upload-hint">
+                <i class="fas fa-info-circle"></i>
+                <span>Tip: Use consistent naming to make matching faster.</span>
+            </div>
+        </header>
+
+        <form id="upload-form" action="{{ url_for('upload_preview') }}" method="post" enctype="multipart/form-data" class="upload-form">
+            <label for="files" class="dropzone" id="dropzone">
+                <div class="dropzone-icon">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                </div>
+                <div class="dropzone-text">
+                    <strong>Drag & drop your files here</strong>
+                    <span>or click to browse your computer</span>
+                </div>
+                <input
+                    class="visually-hidden"
+                    type="file"
+                    id="files"
+                    name="files"
+                    accept="audio/mpeg,audio/x-flac,audio/flac,audio/wav,audio/x-wav,audio/ogg,audio/aac,application/zip"
+                    multiple
+                    required
+                >
+            </label>
+
+            <p class="form-helper">Hold down Ctrl (Windows/Linux) or Command (Mac) to select multiple files.</p>
+
+            <div class="upload-actions">
+                <button type="reset" class="harmony-button harmony-button--ghost" id="clearSelection">
+                    <i class="fas fa-trash"></i>
+                    <span>Clear Selection</span>
+                </button>
+                <button type="submit" class="harmony-button harmony-button--primary">
+                    <i class="fas fa-wand-magic-sparkles"></i>
+                    <span>Generate Preview</span>
+                </button>
+            </div>
+        </form>
+    </section>
+</div>
+
+<style>
+.upload-page {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 6rem 1.5rem 3rem;
+    display: grid;
+    gap: 2rem;
+}
+
+.page-hero {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 2.5rem 3rem;
+}
+
+.hero-copy {
+    max-width: 520px;
+}
+
+.hero-actions {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.alerts-stack {
+    display: grid;
+    gap: 1rem;
+}
+
+.upload-card {
+    padding: 2.5rem;
+    display: grid;
+    gap: 2rem;
+}
+
+.upload-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1.5rem;
+}
+
+.upload-header h2 {
+    margin-bottom: 0.5rem;
+}
+
+.upload-header p {
+    margin: 0;
+    color: var(--text-muted);
+}
+
+.upload-hint {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.65rem;
+    padding: 0.75rem 1rem;
+    border-radius: var(--border-radius-sm);
+    background: rgba(255, 255, 255, 0.12);
+    color: var(--text-inverse);
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.upload-form {
+    display: grid;
+    gap: 1.5rem;
+}
+
+.dropzone {
+    position: relative;
+    border: 2px dashed rgba(255, 255, 255, 0.25);
+    border-radius: var(--border-radius);
+    padding: 3rem 2rem;
+    display: grid;
+    justify-items: center;
+    gap: 1rem;
+    cursor: pointer;
+    transition: border-color 0.3s ease, transform 0.2s ease;
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.dropzone:hover {
+    border-color: rgba(102, 126, 234, 0.5);
+    transform: translateY(-3px);
+}
+
+.dropzone.dragover {
+    border-color: rgba(102, 126, 234, 0.9);
+    background: rgba(102, 126, 234, 0.08);
+}
+
+.dropzone-icon {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.15);
+    display: grid;
+    place-items: center;
+    color: var(--text-inverse);
+    font-size: 2rem;
+}
+
+.dropzone-text {
+    text-align: center;
+    color: var(--text-secondary);
+}
+
+.dropzone-text strong {
+    display: block;
+    font-size: 1.1rem;
+    color: var(--text-primary);
+}
+
+.form-helper {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+.upload-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+}
+
+@media (max-width: 768px) {
+    .page-hero {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1.5rem;
+    }
+
+    .hero-actions {
+        width: 100%;
+    }
+
+    .upload-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .upload-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .upload-actions .harmony-button {
+        width: 100%;
+    }
+}
+</style>
+
+<script>
+const uploadForm = document.getElementById('upload-form');
+const fileInput = document.getElementById('files');
+const dropzone = document.getElementById('dropzone');
+const clearSelection = document.getElementById('clearSelection');
+
+function showAlert(message) {
+    alert(message);
+}
+
+function validateFiles(files) {
+    if (!files || files.length === 0) {
+        showAlert('Please select at least one audio file or a ZIP archive.');
+        return false;
+    }
+
+    const hasZip = Array.from(files).some((file) => file.name.toLowerCase().endsWith('.zip'));
+    const hasAudio = Array.from(files).some((file) => file.type.startsWith('audio/') || /\.(mp3|flac|wav|aac|m4a|ogg)$/i.test(file.name));
+
+    if (!hasZip && !hasAudio) {
+        showAlert('Please select at least one supported audio file or a ZIP archive containing audio files.');
+        return false;
+    }
+
+    if (files.length > 100) {
+        showAlert('You can upload a maximum of 100 files at a time.');
+        return false;
+    }
+
+    return true;
+}
+
+uploadForm.addEventListener('submit', (event) => {
+    if (!validateFiles(fileInput.files)) {
+        event.preventDefault();
+    }
+});
+
+clearSelection.addEventListener('click', () => {
+    fileInput.value = '';
+});
+
+const dropzoneEvents = ['dragenter', 'dragover', 'dragleave', 'drop'];
+dropzoneEvents.forEach((eventName) => {
+    dropzone.addEventListener(eventName, (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+    });
+});
+
+dropzone.addEventListener('dragover', () => dropzone.classList.add('dragover'));
+dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
+dropzone.addEventListener('drop', (event) => {
+    dropzone.classList.remove('dragover');
+    const droppedFiles = event.dataTransfer.files;
+    if (validateFiles(droppedFiles)) {
+        fileInput.files = droppedFiles;
+    }
+});
+
+// open file dialog when clicking the dropzone
+fileInput.addEventListener('change', () => {
+    validateFiles(fileInput.files);
+});
+</script>
+{% endblock %}

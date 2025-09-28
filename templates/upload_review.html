@@ -1,0 +1,504 @@
+{% extends "base.html" %}
+{% block title %}Review Upload | Harmony{% endblock %}
+{% block content %}
+<div class="upload-review-page">
+    <section class="page-hero glass-card">
+        <div class="hero-copy">
+            <span class="eyebrow">Upload · Review</span>
+            <h1>Review Your Batch</h1>
+            <p>Verify audio metadata, approve pending artists, and confirm the tracks you want to bring into Harmony.</p>
+        </div>
+        <div class="hero-actions">
+            <a class="harmony-button harmony-button--ghost" href="{{ url_for('upload_tracks') }}">
+                <i class="fas fa-redo"></i>
+                <span>Start Over</span>
+            </a>
+        </div>
+    </section>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="alerts-stack">
+                {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible" role="alert">
+                    <span>{{ message }}</span>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <form id="confirm-form" action="{{ url_for('upload_confirm') }}" method="post" class="glass-card">
+        <input type="hidden" name="confirm_artists" id="confirm_artists" value="false">
+        <input type="hidden" name="batch_id" value="{{ batch_id }}">
+
+        <section class="batch-summary">
+            <header class="section-heading">
+                <div>
+                    <h2>Batch Summary</h2>
+                    <p>Check key stats before confirming.</p>
+                </div>
+                <div class="summary-pill">
+                    <i class="fas fa-clock"></i>
+                    <span>Uploaded {{ batch_uploaded_at if batch_uploaded_at else 'just now' }}</span>
+                </div>
+            </header>
+            <dl class="summary-grid">
+                <div>
+                    <dt>Total Tracks</dt>
+                    <dd>{{ tracks|length }}</dd>
+                </div>
+                <div>
+                    <dt>Matched Artists</dt>
+                    <dd>{{ matched_artists|length }}</dd>
+                </div>
+                <div>
+                    <dt>Pending Artists</dt>
+                    <dd>{{ pending_artists|length }}</dd>
+                </div>
+            </dl>
+            {% if pending_artists %}
+            <div class="alert alert-warning" role="alert">
+                <i class="fas fa-user-plus"></i>
+                <span><strong>New artists detected.</strong> Review the details below and approve their creation before confirming.</span>
+            </div>
+            {% endif %}
+        </section>
+
+        {% if pending_artists %}
+        <section class="pending-artists">
+            <header class="section-heading">
+                <div>
+                    <h2>Pending Artists</h2>
+                    <p>Provide missing information and approve new profiles.</p>
+                </div>
+                <label class="toggle" for="confirmArtistsCheckbox">
+                    <input class="toggle-input" type="checkbox" id="confirmArtistsCheckbox">
+                    <span class="toggle-track"></span>
+                    <span class="toggle-label">Approve artist creation</span>
+                </label>
+            </header>
+            <div class="table-wrapper">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th scope="col">Name</th>
+                            <th scope="col">Album</th>
+                            <th scope="col">Genre</th>
+                            <th scope="col">Country <span class="muted">(optional)</span></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% for artist in pending_artists %}
+                        <tr>
+                            <td>
+                                <label class="visually-hidden" for="pending-artist-name-{{ loop.index }}">Pending artist name</label>
+                                <input class="form-control" type="text" id="pending-artist-name-{{ loop.index }}" name="pending_artists[{{ loop.index0 }}][name]" value="{{ artist.name }}" required placeholder="Artist name">
+                            </td>
+                            <td>
+                                <label class="visually-hidden" for="pending-artist-album-{{ loop.index }}">Pending artist album</label>
+                                <input class="form-control" type="text" id="pending-artist-album-{{ loop.index }}" name="pending_artists[{{ loop.index0 }}][album]" value="{{ artist.album or '' }}" placeholder="Associated album">
+                            </td>
+                            <td>
+                                <label class="visually-hidden" for="pending-artist-genre-{{ loop.index }}">Pending artist genre</label>
+                                <input class="form-control" type="text" id="pending-artist-genre-{{ loop.index }}" name="pending_artists[{{ loop.index0 }}][genre]" value="{{ artist.genre or '' }}" placeholder="Primary genre">
+                            </td>
+                            <td>
+                                <label class="visually-hidden" for="pending-artist-country-{{ loop.index }}">Pending artist country</label>
+                                <input class="form-control" type="text" id="pending-artist-country-{{ loop.index }}" name="pending_artists[{{ loop.index0 }}][country]" value="{{ artist.country or '' }}" placeholder="Country">
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+        {% endif %}
+
+        <section class="tracks-preview">
+            <header class="section-heading">
+                <div>
+                    <h2>Tracks Preview</h2>
+                    <p>Edit metadata in-line before finalising.</p>
+                </div>
+                <span class="badge">{{ tracks|length }} tracks</span>
+            </header>
+            {% if tracks %}
+            <div class="table-wrapper">
+                <table class="table table-hover align-middle">
+                    <thead>
+                        <tr>
+                            <th scope="col">Title</th>
+                            <th scope="col">Artist</th>
+                            <th scope="col">Album</th>
+                            <th scope="col">Genre</th>
+                            <th scope="col">Release Year</th>
+                            <th scope="col">Duration (s)</th>
+                            <th scope="col">Bitrate (kbps)</th>
+                            <th scope="col">Sample Rate (Hz)</th>
+                            <th scope="col">File Size (MB)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% for track in tracks %}
+                        <tr>
+                            <td>
+                                <label class="visually-hidden" for="track-title-{{ loop.index }}">Track title</label>
+                                <input class="form-control form-control-sm" type="text" id="track-title-{{ loop.index }}" name="tracks[{{ loop.index0 }}][title]" value="{{ track.title }}" required>
+                                <label class="visually-hidden" for="track-filename-{{ loop.index }}">Filename</label>
+                                <input class="form-control form-control-sm filename" type="text" id="track-filename-{{ loop.index }}" name="tracks[{{ loop.index0 }}][filename]" value="{{ track.filename }}" readonly>
+                            </td>
+                            <td>
+                                <label class="visually-hidden" for="track-artist-name-{{ loop.index }}">Artist name</label>
+                                <input class="form-control form-control-sm" type="text" id="track-artist-name-{{ loop.index }}" name="tracks[{{ loop.index0 }}][artist_name]" value="{{ track.artist_name }}" required>
+                                <input type="hidden" name="tracks[{{ loop.index0 }}][artist_status]" value="{{ track.artist_status }}">
+                                <input type="hidden" name="tracks[{{ loop.index0 }}][artist_id]" value="{{ track.artist_id }}">
+                            </td>
+                            <td>
+                                <label class="visually-hidden" for="track-album-{{ loop.index }}">Album</label>
+                                <input class="form-control form-control-sm" type="text" id="track-album-{{ loop.index }}" name="tracks[{{ loop.index0 }}][album]" value="{{ track.album }}" placeholder="Album name">
+                            </td>
+                            <td>
+                                <label class="visually-hidden" for="track-genre-{{ loop.index }}">Genre</label>
+                                <input class="form-control form-control-sm" type="text" id="track-genre-{{ loop.index }}" name="tracks[{{ loop.index0 }}][genre]" value="{{ track.genre }}" placeholder="Genre">
+                            </td>
+                            <td>
+                                <label class="visually-hidden" for="track-release-year-{{ loop.index }}">Release year</label>
+                                <input class="form-control form-control-sm" type="number" min="1900" max="{{ current_year }}" step="1" id="track-release-year-{{ loop.index }}" name="tracks[{{ loop.index0 }}][release_year]" value="{{ track.release_year }}" placeholder="YYYY" aria-describedby="track-release-year-help-{{ loop.index }}">
+                                <div class="form-text" id="track-release-year-help-{{ loop.index }}">Leave blank if unknown</div>
+                            </td>
+                            <td>
+                                <label class="visually-hidden" for="track-duration-{{ loop.index }}">Duration in seconds</label>
+                                <div class="input-group input-group-sm">
+                                    <input class="form-control" type="number" min="0" step="1" id="track-duration-{{ loop.index }}" name="tracks[{{ loop.index0 }}][duration]" value="{{ track.duration }}" placeholder="Seconds">
+                                    <span class="input-group-text">sec</span>
+                                </div>
+                            </td>
+                            <td>
+                                <label class="visually-hidden" for="track-bitrate-{{ loop.index }}">Bitrate</label>
+                                <div class="input-group input-group-sm">
+                                    <input class="form-control" type="number" min="0" step="1" id="track-bitrate-{{ loop.index }}" name="tracks[{{ loop.index0 }}][bitrate]" value="{{ track.bitrate }}" placeholder="kbps">
+                                    <span class="input-group-text">kbps</span>
+                                </div>
+                            </td>
+                            <td>
+                                <label class="visually-hidden" for="track-sample-rate-{{ loop.index }}">Sample rate</label>
+                                <div class="input-group input-group-sm">
+                                    <input class="form-control" type="number" min="0" step="1" id="track-sample-rate-{{ loop.index }}" name="tracks[{{ loop.index0 }}][sample_rate]" value="{{ track.sample_rate }}" placeholder="Hz">
+                                    <span class="input-group-text">Hz</span>
+                                </div>
+                            </td>
+                            <td>
+                                <label class="visually-hidden" for="track-file-size-{{ loop.index }}">File size (MB)</label>
+                                <input class="form-control form-control-sm" type="number" min="0" step="0.01" id="track-file-size-{{ loop.index }}" name="tracks[{{ loop.index0 }}][file_size_mb]" value="{{ track.file_size_mb }}" readonly>
+                                <input type="hidden" name="tracks[{{ loop.index0 }}][file_size]" value="{{ track.file_size }}">
+                                <input type="hidden" name="tracks[{{ loop.index0 }}][file_path]" value="{{ track.file_path }}">
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <div class="empty-icon"><i class="fas fa-music"></i></div>
+                <h3>No tracks detected</h3>
+                <p>It looks like this batch didn’t include any audio files. Please start over and select supported formats.</p>
+                <a class="harmony-button" href="{{ url_for('upload_tracks') }}">
+                    <i class="fas fa-upload"></i>
+                    <span>Start a new upload</span>
+                </a>
+            </div>
+            {% endif %}
+        </section>
+
+        <footer class="review-footer">
+            <a class="harmony-button harmony-button--ghost" href="{{ url_for('upload_tracks') }}">
+                <i class="fas fa-arrow-left"></i>
+                <span>Back</span>
+            </a>
+            <button type="submit" class="harmony-button harmony-button--primary" data-action="confirm">
+                <i class="fas fa-check"></i>
+                <span>Confirm Upload</span>
+            </button>
+        </footer>
+    </form>
+</div>
+
+<style>
+.upload-review-page {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 6rem 1.5rem 3rem;
+    display: grid;
+    gap: 2rem;
+}
+
+.page-hero {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 2.5rem 3rem;
+}
+
+.hero-copy {
+    max-width: 560px;
+}
+
+.hero-actions {
+    display: flex;
+    gap: 1rem;
+}
+
+.alerts-stack {
+    display: grid;
+    gap: 1rem;
+}
+
+.glass-card {
+    padding: 2rem;
+}
+
+.batch-summary,
+.pending-artists,
+.tracks-preview {
+    display: grid;
+    gap: 1.5rem;
+}
+
+.section-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1.5rem;
+}
+
+.section-heading h2 {
+    margin-bottom: 0.5rem;
+}
+
+.section-heading p {
+    color: var(--text-muted);
+}
+
+.summary-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.6rem 1.1rem;
+    border-radius: var(--border-radius-sm);
+    background: rgba(255, 255, 255, 0.15);
+    color: var(--text-inverse);
+    font-weight: 500;
+}
+
+.summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 1.25rem;
+}
+
+.summary-grid dt {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+}
+
+.summary-grid dd {
+    font-size: 1.4rem;
+    font-weight: 700;
+}
+
+.toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    cursor: pointer;
+    user-select: none;
+}
+
+.toggle-input {
+    display: none;
+}
+
+.toggle-track {
+    width: 44px;
+    height: 24px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.18);
+    position: relative;
+    transition: background 0.2s ease;
+}
+
+.toggle-track::after {
+    content: "";
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #fff;
+    transition: transform 0.2s ease;
+}
+
+.toggle-input:checked + .toggle-track {
+    background: rgba(102, 126, 234, 0.6);
+}
+
+.toggle-input:checked + .toggle-track::after {
+    transform: translateX(20px);
+}
+
+.toggle-label {
+    color: var(--text-muted);
+    font-weight: 500;
+}
+
+.table-wrapper {
+    border-radius: var(--border-radius);
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.table thead {
+    background: rgba(255, 255, 255, 0.08);
+    font-size: 0.85rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+.table thead th {
+    color: var(--text-muted);
+    border-bottom: none;
+}
+
+.table tbody tr:nth-of-type(odd) {
+    background-color: rgba(255, 255, 255, 0.03);
+}
+
+.table tbody tr:hover {
+    background-color: rgba(255, 255, 255, 0.08);
+}
+
+.table input,
+.table .input-group-text {
+    background: rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    color: var(--text-primary);
+}
+
+.table input:focus {
+    border-color: rgba(102, 126, 234, 0.6);
+    box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+}
+
+.filename {
+    margin-top: 0.35rem;
+}
+
+.badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.45rem 0.9rem;
+    background: rgba(255, 255, 255, 0.18);
+    border-radius: 999px;
+    color: var(--text-inverse);
+    font-weight: 600;
+}
+
+.review-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 2rem;
+}
+
+.empty-state {
+    padding: 3rem 2rem;
+    text-align: center;
+    display: grid;
+    gap: 1rem;
+    justify-items: center;
+}
+
+.empty-icon {
+    width: 82px;
+    height: 82px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.18);
+    display: grid;
+    place-items: center;
+    font-size: 2rem;
+    color: var(--text-inverse);
+}
+
+@media (max-width: 992px) {
+    .page-hero {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1.5rem;
+    }
+
+    .hero-actions {
+        width: 100%;
+        justify-content: flex-start;
+    }
+}
+
+@media (max-width: 768px) {
+    .summary-grid {
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    }
+
+    .section-heading {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+    }
+
+    .review-footer {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .review-footer .harmony-button {
+        width: 100%;
+    }
+}
+</style>
+
+<script>
+const confirmArtistsCheckbox = document.getElementById('confirmArtistsCheckbox');
+const confirmArtistsField = document.getElementById('confirm_artists');
+const confirmForm = document.getElementById('confirm-form');
+
+if (confirmArtistsCheckbox) {
+    confirmArtistsCheckbox.addEventListener('change', () => {
+        confirmArtistsField.value = confirmArtistsCheckbox.checked ? 'true' : 'false';
+    });
+}
+
+confirmForm.addEventListener('submit', (event) => {
+    const trackCount = {{ tracks|length }};
+
+    if (!trackCount) {
+        event.preventDefault();
+        alert('No tracks to upload. Please start over.');
+        return;
+    }
+
+    if (confirmArtistsCheckbox && confirmArtistsCheckbox.checked === false && {{ pending_artists|length }} > 0) {
+        const confirmed = confirm('You have pending artists that are not approved. Their tracks will be assigned to a temporary artist. Continue?');
+
+        if (!confirmed) {
+            event.preventDefault();
+        }
+    }
+});
+</script>
+{% endblock %}

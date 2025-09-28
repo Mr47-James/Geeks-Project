@@ -1,0 +1,952 @@
+{% extends "base.html" %}
+
+{% block title %}{{ artist.name }} | Harmony{% endblock %}
+
+{% block content %}
+<style>
+    .artist-hero {
+        position: relative;
+        padding: 4rem 0;
+        margin-bottom: 3rem;
+        overflow: hidden;
+        animation: fadeInUp 0.8s ease;
+    }
+
+    .artist-hero::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+        border-radius: var(--border-radius);
+    }
+
+    .artist-hero-content {
+        position: relative;
+        z-index: 2;
+        display: flex;
+        align-items: center;
+        gap: 2rem;
+        padding: 0 2rem;
+    }
+
+    .artist-avatar-large {
+        width: 200px;
+        height: 200px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 4rem;
+        position: relative;
+        overflow: hidden;
+        transition: transform 0.3s ease;
+        box-shadow: 0 20px 40px rgba(102, 126, 234, 0.3);
+        flex-shrink: 0;
+    }
+
+    .artist-avatar-large::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.2) 50%, transparent 70%);
+        transform: translateX(-100%);
+        transition: transform 0.6s ease;
+    }
+
+    .artist-hero:hover .artist-avatar-large::before {
+        transform: translateX(100%);
+    }
+
+    .artist-hero:hover .artist-avatar-large {
+        transform: scale(1.05) rotate(5deg);
+    }
+
+    .artist-info {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .artist-name {
+        font-size: 3rem;
+        font-weight: 800;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: 0.5rem;
+        line-height: 1.2;
+    }
+
+    .artist-genre {
+        font-size: 1.2rem;
+        color: var(--text-secondary);
+        font-weight: 500;
+        margin-bottom: 1rem;
+        text-transform: capitalize;
+    }
+
+    .artist-stats {
+        display: flex;
+        gap: 2rem;
+        margin-bottom: 2rem;
+        flex-wrap: wrap;
+    }
+
+    .stat-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 1rem;
+        background: var(--glass-bg);
+        backdrop-filter: var(--glass-backdrop);
+        -webkit-backdrop-filter: var(--glass-backdrop);
+        border: 1px solid var(--glass-border);
+        border-radius: var(--border-radius-sm);
+        transition: all 0.3s ease;
+        min-width: 100px;
+    }
+
+    .stat-item:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+    }
+
+    .stat-number {
+        font-size: 1.8rem;
+        font-weight: 800;
+        color: var(--text-primary);
+        margin-bottom: 0.25rem;
+    }
+
+    .stat-label {
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        font-weight: 600;
+    }
+
+    .artist-actions {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .action-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1.5rem;
+        background: var(--glass-bg);
+        backdrop-filter: var(--glass-backdrop);
+        -webkit-backdrop-filter: var(--glass-backdrop);
+        border: 1px solid var(--glass-border);
+        border-radius: var(--border-radius-sm);
+        color: var(--text-primary);
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .action-btn::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+        transition: left 0.5s ease;
+    }
+
+    .action-btn:hover::before {
+        left: 100%;
+    }
+
+    .action-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+        color: var(--text-primary);
+    }
+
+    .action-btn.primary {
+        background: var(--primary);
+        color: white;
+        border-color: transparent;
+    }
+
+    .action-btn.danger {
+        background: var(--danger);
+        color: white;
+        border-color: transparent;
+    }
+
+    .back-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: var(--text-secondary);
+        text-decoration: none;
+        font-weight: 500;
+        margin-bottom: 2rem;
+        transition: all 0.3s ease;
+    }
+
+    .back-btn:hover {
+        color: var(--text-primary);
+        transform: translateX(-5px);
+    }
+
+    .artist-bio {
+        background: var(--glass-bg);
+        backdrop-filter: var(--glass-backdrop);
+        -webkit-backdrop-filter: var(--glass-backdrop);
+        border: 1px solid var(--glass-border);
+        border-radius: var(--border-radius);
+        padding: 2rem;
+        margin-bottom: 3rem;
+        animation: fadeInUp 0.8s ease 0.2s both;
+    }
+
+    .bio-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .bio-title i {
+        color: #667eea;
+    }
+
+    .bio-content {
+        color: var(--text-secondary);
+        line-height: 1.7;
+        font-size: 1.05rem;
+    }
+
+    .bio-meta {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5rem;
+        margin-top: 2rem;
+        padding-top: 2rem;
+        border-top: 1px solid var(--glass-border);
+    }
+
+    .meta-item {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .meta-label {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        font-weight: 600;
+    }
+
+    .meta-value {
+        font-size: 1rem;
+        color: var(--text-primary);
+        font-weight: 600;
+    }
+
+    .tracks-section {
+        animation: fadeInUp 0.8s ease 0.4s both;
+    }
+
+    .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid var(--glass-border);
+    }
+
+    .section-title {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .section-title i {
+        color: #667eea;
+    }
+
+    .track-count {
+        background: var(--primary);
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 50px;
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+
+    .tracks-grid {
+        display: grid;
+        gap: 1rem;
+    }
+
+    .track-card {
+        background: var(--glass-bg);
+        backdrop-filter: var(--glass-backdrop);
+        -webkit-backdrop-filter: var(--glass-backdrop);
+        border: 1px solid var(--glass-border);
+        border-radius: var(--border-radius-sm);
+        padding: 1.5rem;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+        animation: fadeInUp 0.8s ease var(--delay, 0.6s) both;
+    }
+
+    .track-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+        transition: left 0.3s ease;
+    }
+
+    .track-card:hover::before {
+        left: 0;
+    }
+
+    .track-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+    }
+
+    .track-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 1rem;
+        position: relative;
+        z-index: 2;
+    }
+
+    .track-info {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .track-title {
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 0.25rem;
+        text-decoration: none;
+        transition: color 0.3s ease;
+    }
+
+    .track-title:hover {
+        color: #667eea;
+    }
+
+    .track-meta {
+        display: flex;
+        gap: 1rem;
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+        flex-wrap: wrap;
+    }
+
+    .track-meta span {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+
+    .track-actions {
+        display: flex;
+        gap: 0.5rem;
+        position: relative;
+        z-index: 2;
+    }
+
+    .track-action {
+        width: 40px;
+        height: 40px;
+        border: none;
+        background: var(--glass-bg);
+        backdrop-filter: var(--glass-backdrop);
+        -webkit-backdrop-filter: var(--glass-backdrop);
+        border: 1px solid var(--glass-border);
+        border-radius: 50%;
+        color: var(--text-primary);
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-decoration: none;
+    }
+
+    .track-action:hover {
+        transform: scale(1.1);
+        background: var(--primary);
+        color: white;
+        border-color: var(--primary);
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        background: var(--glass-bg);
+        backdrop-filter: var(--glass-backdrop);
+        -webkit-backdrop-filter: var(--glass-backdrop);
+        border: 1px solid var(--glass-border);
+        border-radius: var(--border-radius);
+        animation: fadeInUp 0.8s ease 0.6s both;
+    }
+
+    .empty-icon {
+        width: 80px;
+        height: 80px;
+        background: var(--glass-bg);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1.5rem;
+        font-size: 2rem;
+        color: var(--text-muted);
+    }
+
+    .empty-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 0.5rem;
+    }
+
+    .empty-message {
+        color: var(--text-secondary);
+        margin-bottom: 2rem;
+        font-size: 1.05rem;
+    }
+
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @media (max-width: 768px) {
+        .artist-hero-content {
+            flex-direction: column;
+            text-align: center;
+            padding: 0 1rem;
+        }
+
+        .artist-avatar-large {
+            width: 150px;
+            height: 150px;
+            font-size: 3rem;
+        }
+
+        .artist-name {
+            font-size: 2rem;
+        }
+
+        .artist-stats {
+            justify-content: center;
+        }
+
+        .artist-actions {
+            justify-content: center;
+        }
+
+        .bio-meta {
+            grid-template-columns: 1fr;
+        }
+
+        .section-header {
+            flex-direction: column;
+            gap: 1rem;
+            align-items: stretch;
+        }
+
+        .track-header {
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .track-actions {
+            align-self: flex-start;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .artist-hero {
+            padding: 2rem 0;
+        }
+
+        .artist-name {
+            font-size: 1.8rem;
+        }
+
+        .artist-stats {
+            gap: 1rem;
+        }
+
+        .stat-item {
+            min-width: 80px;
+            padding: 0.75rem;
+        }
+
+        .stat-number {
+            font-size: 1.4rem;
+        }
+
+        .artist-bio,
+        .tracks-section {
+            margin-left: -1rem;
+            margin-right: -1rem;
+            border-radius: 0;
+        }
+    }
+</style>
+
+<!-- Back Navigation -->
+<a href="{{ url_for('client_artists') if session.role == 'consumer' else url_for('artists') }}" class="back-btn">
+    <i class="fas fa-arrow-left"></i>
+    Back to Artists
+</a>
+
+<!-- Artist Hero Section -->
+<div class="glass-card artist-hero">
+    <div class="artist-hero-content">
+        <div class="artist-avatar-large">
+            <i class="fas fa-microphone"></i>
+        </div>
+        <div class="artist-info">
+            <h1 class="artist-name">{{ artist.name }}</h1>
+            <div class="artist-genre">{{ artist.genre or 'Various Genres' }}</div>
+            
+            <div class="artist-stats">
+                <div class="stat-item">
+                    <div class="stat-number">{{ tracks|length }}</div>
+                    <div class="stat-label">Tracks</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">{{ (tracks|sum(attribute='play_count') if tracks else 0) or 0 }}</div>
+                    <div class="stat-label">Plays</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">{{ (tracks|sum(attribute='like_count') if tracks else 0) or 0 }}</div>
+                    <div class="stat-label">Likes</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">{{ artist.created_at.strftime('%Y') if artist.created_at else '—' }}</div>
+                    <div class="stat-label">Joined</div>
+                </div>
+            </div>
+
+            <div class="artist-actions">
+                {% if session.role == 'consumer' %}
+                    <button class="action-btn primary" id="followBtn" onclick="toggleFollowArtist({{ artist.id }})">
+                        <i class="fas fa-user-plus"></i>
+                        <span>Follow Artist</span>
+                    </button>
+                    <button class="action-btn" onclick="shareArtist({{ artist.id }})">
+                        <i class="fas fa-share"></i>
+                        Share
+                    </button>
+                    {% if tracks %}
+                        <button class="action-btn" onclick="playAllTracks()" id="playAllBtn">
+                            <i class="fas fa-play"></i>
+                            <span>Play All</span>
+                        </button>
+                    {% endif %}
+                {% else %}
+                    <a href="{{ url_for('edit_artist', artist_id=artist.id) }}" class="action-btn primary">
+                        <i class="fas fa-edit"></i>
+                        Edit Profile
+                    </a>
+                    <a href="{{ url_for('create_track') }}?artist_id={{ artist.id }}" class="action-btn">
+                        <i class="fas fa-plus"></i>
+                        Add Track
+                    </a>
+                    <form method="post" action="{{ url_for('delete_artist', artist_id=artist.id) }}" style="display: inline;" onsubmit="return confirm('Delete artist {{ artist.name }}? This will remove all their tracks.');">
+                        <button type="submit" class="action-btn danger">
+                            <i class="fas fa-trash"></i>
+                            Delete
+                        </button>
+                    </form>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Artist Biography -->
+<div class="glass-card artist-bio">
+    <h2 class="bio-title">
+        <i class="fas fa-user"></i>
+        About {{ artist.name }}
+    </h2>
+    <div class="bio-content">
+        {{ artist.bio or 'No biography available yet. This artist hasn\'t shared their story with us.' }}
+    </div>
+    
+    <div class="bio-meta">
+        <div class="meta-item">
+            <div class="meta-label">Primary Genre</div>
+            <div class="meta-value">{{ artist.genre or 'Not specified' }}</div>
+        </div>
+        <div class="meta-item">
+            <div class="meta-label">Country</div>
+            <div class="meta-value">{{ artist.country or 'Not specified' }}</div>
+        </div>
+        <div class="meta-item">
+            <div class="meta-label">Member Since</div>
+            <div class="meta-value">{{ artist.created_at.strftime('%B %d, %Y') if artist.created_at else 'Unknown' }}</div>
+        </div>
+        <div class="meta-item">
+            <div class="meta-label">Total Duration</div>
+            <div class="meta-value">
+                {% set total_duration = tracks|sum(attribute='duration') if tracks else 0 %}
+                {% if total_duration %}
+                    {{ (total_duration // 3600)|int }}h {{ ((total_duration % 3600) // 60)|int }}m
+                {% else %}
+                    0m
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tracks Section -->
+<div class="tracks-section">
+    <div class="section-header">
+        <h2 class="section-title">
+            <i class="fas fa-music"></i>
+            Track Catalog
+        </h2>
+        <div class="track-count">{{ tracks|length }} tracks</div>
+    </div>
+
+    {% if tracks %}
+        <div class="tracks-grid">
+            {% for track in tracks %}
+            <div class="track-card" style="--delay: {{ 0.6 + loop.index * 0.05 }}s;">
+                <div class="track-header">
+                    <div class="track-info">
+                        <a href="{{ url_for('track_details', track_id=track.id) }}" class="track-title">
+                            {{ track.title }}
+                        </a>
+                        <div class="track-meta">
+                            {% if track.album %}
+                                <span><i class="fas fa-compact-disc"></i> {{ track.album }}</span>
+                            {% endif %}
+                            {% if track.genre %}
+                                <span><i class="fas fa-tag"></i> {{ track.genre }}</span>
+                            {% endif %}
+                            {% if track.duration %}
+                                <span><i class="fas fa-clock"></i> {{ (track.duration // 60)|int }}:{{ '%02d'|format((track.duration % 60)|int) }}</span>
+                            {% endif %}
+                            {% if track.created_at %}
+                                <span><i class="fas fa-calendar"></i> {{ track.created_at.strftime('%b %d, %Y') }}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="track-actions">
+                        <button class="track-action" onclick="playTrack({{ track.id }})" title="Play Track" data-track-id="{{ track.id }}">
+                            <i class="fas fa-play"></i>
+                        </button>
+                        <a href="{{ url_for('track_details', track_id=track.id) }}" class="track-action" title="View Details">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                        {% if session.role == 'consumer' %}
+                            <button class="track-action" onclick="likeTrack({{ track.id }})" title="Like Track">
+                                <i class="far fa-heart"></i>
+                            </button>
+                        {% else %}
+                            <a href="{{ url_for('edit_track', track_id=track.id) }}" class="track-action" title="Edit Track">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="empty-state">
+            <div class="empty-icon">
+                <i class="fas fa-music"></i>
+            </div>
+            <h3 class="empty-title">No tracks yet</h3>
+            <p class="empty-message">
+                This artist hasn't uploaded any tracks yet. 
+                {% if session.role != 'consumer' %}
+                    Start building their catalog by adding some music.
+                {% else %}
+                    Check back later for new releases!
+                {% endif %}
+            </p>
+            {% if session.role != 'consumer' %}
+                <a href="{{ url_for('create_track') }}?artist_id={{ artist.id }}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i>
+                    Add First Track
+                </a>
+            {% endif %}
+        </div>
+    {% endif %}
+</div>
+
+<script>
+    // Track follow state
+    let isFollowing = false;
+
+    // Play track function
+    function playTrack(trackId) {
+        // Use the global audio player to play the track
+        if (window.harmonyPlayer) {
+            window.harmonyPlayer.loadTrack(trackId, true);
+        } else {
+            console.log('Audio player not available, track ID:', trackId);
+            showNotification('Audio player is loading...', 'info');
+        }
+    }
+
+    // Play all tracks function
+    function playAllTracks() {
+        const trackIds = [{% for track in tracks %}{{ track.id }}{% if not loop.last %}, {% endif %}{% endfor %}];
+        
+        if (trackIds.length === 0) {
+            showNotification('No tracks available to play', 'warning');
+            return;
+        }
+
+        const playAllBtn = document.getElementById('playAllBtn');
+        const originalContent = playAllBtn.innerHTML;
+        
+        // Update button to show loading state
+        playAllBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> <span>Loading...</span>';
+        playAllBtn.disabled = true;
+
+        if (window.harmonyPlayer) {
+            // Create a playlist with all tracks
+            const playlist = trackIds.map(id => ({ id: id }));
+            window.harmonyPlayer.setPlaylist(playlist, 0);
+            
+            // Start playing the first track
+            window.harmonyPlayer.loadTrack(trackIds[0], true).then(() => {
+                showNotification(`Playing all ${trackIds.length} tracks from {{ artist.name }}`, 'success');
+                
+                // Reset button after successful load
+                setTimeout(() => {
+                    playAllBtn.innerHTML = originalContent;
+                    playAllBtn.disabled = false;
+                }, 1000);
+            }).catch(error => {
+                console.error('Error playing tracks:', error);
+                showNotification('Failed to start playlist', 'error');
+                
+                // Reset button on error
+                playAllBtn.innerHTML = originalContent;
+                playAllBtn.disabled = false;
+            });
+        } else {
+            console.log('Audio player not available, playing tracks:', trackIds);
+            showNotification('Audio player is loading...', 'info');
+            
+            // Reset button
+            setTimeout(() => {
+                playAllBtn.innerHTML = originalContent;
+                playAllBtn.disabled = false;
+            }, 2000);
+        }
+    }
+
+    // Toggle follow artist function
+    function toggleFollowArtist(artistId) {
+        const followBtn = document.getElementById('followBtn');
+        const icon = followBtn.querySelector('i');
+        const text = followBtn.querySelector('span');
+        
+        // Disable button during request
+        followBtn.disabled = true;
+        followBtn.style.opacity = '0.7';
+        
+        if (isFollowing) {
+            // Unfollow
+            icon.className = 'fas fa-spinner fa-spin';
+            text.textContent = 'Unfollowing...';
+            
+            // Simulate API call
+            setTimeout(() => {
+                isFollowing = false;
+                icon.className = 'fas fa-user-plus';
+                text.textContent = 'Follow Artist';
+                followBtn.classList.remove('primary');
+                followBtn.classList.add('primary');
+                
+                showNotification('Artist unfollowed', 'info');
+                
+                // Re-enable button
+                followBtn.disabled = false;
+                followBtn.style.opacity = '1';
+            }, 1000);
+            
+        } else {
+            // Follow
+            icon.className = 'fas fa-spinner fa-spin';
+            text.textContent = 'Following...';
+            
+            // Simulate API call
+            setTimeout(() => {
+                isFollowing = true;
+                icon.className = 'fas fa-user-check';
+                text.textContent = 'Following';
+                followBtn.classList.remove('primary');
+                followBtn.style.background = 'var(--success)';
+                followBtn.style.borderColor = 'transparent';
+                
+                showNotification('Artist followed successfully!', 'success');
+                
+                // Re-enable button
+                followBtn.disabled = false;
+                followBtn.style.opacity = '1';
+            }, 1000);
+        }
+    }
+
+    // Share artist function
+    function shareArtist(artistId) {
+        if (navigator.share) {
+            navigator.share({
+                title: '{{ artist.name }} - Harmony Music',
+                text: 'Check out {{ artist.name }} on Harmony Music!',
+                url: window.location.href
+            });
+        } else {
+            // Fallback: copy to clipboard
+            navigator.clipboard.writeText(window.location.href).then(() => {
+                showNotification('Artist link copied to clipboard!', 'success');
+            }).catch(() => {
+                showNotification('Unable to copy link', 'error');
+            });
+        }
+    }
+
+    // Like track function
+    function likeTrack(trackId) {
+        const button = event.target.closest('.track-action');
+        const icon = button.querySelector('i');
+        const isLiked = icon.classList.contains('fas');
+        
+        // Toggle like state
+        if (isLiked) {
+            icon.className = 'far fa-heart';
+            showNotification('Track removed from favorites', 'info');
+        } else {
+            icon.className = 'fas fa-heart';
+            showNotification('Track added to favorites!', 'success');
+        }
+    }
+
+    // Utility function to show notifications
+    function showNotification(message, type = 'info') {
+        const flashContainer = document.querySelector('.flash-messages');
+        const notification = document.createElement('div');
+        notification.className = `flash-message ${type}`;
+        
+        const iconMap = {
+            success: 'check-circle',
+            error: 'exclamation-triangle',
+            warning: 'exclamation-triangle',
+            info: 'info-circle'
+        };
+        
+        notification.innerHTML = `<i class="fas fa-${iconMap[type]}"></i> ${message}`;
+        flashContainer.appendChild(notification);
+        
+        // Auto remove after 3 seconds
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.remove();
+            }
+        }, 3000);
+    }
+
+    // Add hover effects to track cards
+    document.querySelectorAll('.track-card').forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-8px) scale(1.02)';
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0) scale(1)';
+        });
+    });
+
+    // Animate stats on scroll
+    const observerOptions = {
+        threshold: 0.5,
+        rootMargin: '0px 0px -100px 0px'
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const statNumbers = entry.target.querySelectorAll('.stat-number');
+                statNumbers.forEach(stat => {
+                    const finalValue = parseInt(stat.textContent);
+                    let currentValue = 0;
+                    const increment = Math.ceil(finalValue / 30);
+                    
+                    const counter = setInterval(() => {
+                        currentValue += increment;
+                        if (currentValue >= finalValue) {
+                            stat.textContent = finalValue;
+                            clearInterval(counter);
+                        } else {
+                            stat.textContent = currentValue;
+                        }
+                    }, 50);
+                });
+                observer.unobserve(entry.target);
+            }
+        });
+    }, observerOptions);
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const statsSection = document.querySelector('.artist-stats');
+        if (statsSection) {
+            observer.observe(statsSection);
+        }
+    });
+</script>
+{% endblock %}

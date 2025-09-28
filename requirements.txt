@@ -1,0 +1,17 @@
+flask
+flask-sqlalchemy
+psycopg2-binary
+numpy
+pandas
+matplotlib
+seaborn
+scikit-learn
+tensorflow
+keras
+flask-restful
+flask-cors
+flask-jwt-extended
+flask-bcrypt
+flask-mail
+flask-migrate
+mutagen

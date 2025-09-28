@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Artist - Music Manager{% endblock %}
+
+{% block content %}
+<div class="row gy-4">
+    <div class="col-12">
+        <div class="card will-animate">
+            <div class="card-header d-flex flex-column flex-lg-row gap-3 align-items-lg-center justify-content-lg-between">
+                <div>
+                    <h1 class="section-title mb-0">
+                        <i class="fas fa-user-pen me-2"></i>Edit Artist
+                    </h1>
+                    <small class="text-secondary">Refresh profile details and keep your roster accurate.</small>
+                </div>
+                <a href="{{ url_for('artist_details', artist_id=artist.id) }}" class="btn btn-secondary btn-sm">
+                    <i class="fas fa-arrow-left"></i> Back to Artist Profile
+                </a>
+            </div>
+            <div class="card-body">
+                <form method="POST" class="row g-4">
+                    <div class="col-lg-7">
+                        <div class="card h-100">
+                            <div class="card-header">
+                                <h5 class="mb-0">Profile Information</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label for="name" class="form-label">Name *</label>
+                                    <input type="text" id="name" name="name" class="form-control" value="{{ artist.name }}" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="bio" class="form-label">Biography</label>
+                                    <textarea id="bio" name="bio" class="form-control" rows="5" placeholder="Share background, achievements, or a short story.">{{ artist.bio or '' }}</textarea>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="genre" class="form-label">Primary Genre</label>
+                                            <input type="text" id="genre" name="genre" class="form-control" value="{{ artist.genre or '' }}" placeholder="e.g., Rock, Jazz, Classical">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="country" class="form-label">Country</label>
+                                            <input type="text" id="country" name="country" class="form-control" value="{{ artist.country or '' }}" placeholder="e.g., United States">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-5">
+                        <div class="card h-100 quick-actions-card">
+                            <div class="card-header">
+                                <h5 class="mb-0">Save Changes</h5>
+                            </div>
+                            <div class="card-body">
+                                <p class="text-secondary">Ensure artist insights, analytics, and track associations stay accurate.</p>
+                                <div class="d-grid gap-2">
+                                    <button type="submit" class="btn btn-success">
+                                        <i class="fas fa-floppy-disk"></i> Save Artist
+                                    </button>
+                                    <a href="{{ url_for('artist_details', artist_id=artist.id) }}" class="btn btn-outline-secondary">
+                                        <i class="fas fa-xmark"></i> Cancel
+                                    </a>
+                                </div>
+                                <hr>
+                                <div class="small text-secondary">
+                                    <p class="mb-2"><i class="fas fa-lightbulb"></i> Tip: Keep biographies concise and actionable for marketing teams.</p>
+                                    <p class="mb-0"><i class="fas fa-circle-info"></i> Changes take effect immediately after saving.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

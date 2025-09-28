@@ -1,0 +1,219 @@
+{% extends "base.html" %}
+
+{% block title %}Artists · Harmony Admin{% endblock %}
+
+{% block content %}
+<div class="artists-page">
+    <section class="page-hero glass-card">
+        <div class="page-hero-content">
+            <span class="eyebrow">Admin · Library</span>
+            <h1>Artist Management</h1>
+            <p>Curate your library, keep metadata aligned, and highlight the voices that shape your sound.</p>
+        </div>
+        <a href="{{ url_for('create_artist') }}" class="harmony-button">
+            <i class="fas fa-plus"></i>
+            <span>Add Artist</span>
+        </a>
+    </section>
+
+    <section class="glass-card filter-panel">
+        <div class="panel-heading">
+            <div>
+                <h2>Search & Filter</h2>
+                <p class="panel-subtitle">Locate artists instantly and jump into detailed edits.</p>
+            </div>
+            <div class="panel-meta">
+                <span class="meta-pill">{{ artists.total }} total artists</span>
+            </div>
+        </div>
+        <form method="get" class="filter-form">
+            <label class="form-field">
+                <span class="field-label">Search Artists</span>
+                <input type="text"
+                       id="search"
+                       name="search"
+                       placeholder="Artist name or keyword…"
+                       value="{{ search }}"
+                       autocomplete="off">
+            </label>
+            <div class="filter-actions">
+                <button type="submit" class="harmony-button harmony-button--primary">
+                    <i class="fas fa-search"></i>
+                    <span>Search</span>
+                </button>
+                {% if search %}
+                <a href="{{ url_for('artists') }}" class="harmony-button harmony-button--ghost">
+                    <i class="fas fa-undo"></i>
+                    <span>Reset</span>
+                </a>
+                {% endif %}
+            </div>
+        </form>
+    </section>
+
+    <section class="glass-card artists-panel">
+        {% set total_pages = [artists.pages, 1]|max %}
+        <div class="panel-heading">
+            <div>
+                <h2>Artists</h2>
+                <p class="panel-subtitle">Page {{ artists.page if artists.pages else 1 }} of {{ total_pages }}</p>
+            </div>
+            <div class="panel-meta">
+                <span class="meta-pill">Showing {{ artists.items|length if artists.items else 0 }} of {{ artists.total }}</span>
+                {% if search %}
+                <span class="filter-pill">
+                    <i class="fas fa-filter"></i>
+                    "{{ search }}"
+                </span>
+                {% endif %}
+            </div>
+        </div>
+
+        {% if artists and artists.items %}
+        <div class="row g-4 artists-grid">
+            {% for artist in artists.items %}
+            {% set gradient = loop.cycle('var(--primary)', 'var(--secondary)', 'var(--accent)', 'var(--success)') %}
+            {% set plays = (artist.tracks|sum(attribute='play_count') if artist.tracks else 0) or 0 %}
+            {% set likes = (artist.tracks|sum(attribute='like_count') if artist.tracks else 0) or 0 %}
+            <div class="col-xl-3 col-lg-4 col-md-6">
+                <article class="glass-card artist-card admin h-100 d-flex flex-column" style="--accent-gradient: {{ gradient }}; --gradient: {{ gradient }};">
+
+                    <!-- Artist Header Section -->
+                    <header class="artist-header p-3 border-bottom">
+                        <div class="d-flex align-items-start gap-3">
+                            <div class="artist-avatar flex-shrink-0">
+                                <span class="avatar-text">{{ artist.name[:1]|upper if artist.name else '?' }}</span>
+                            </div>
+                            <div class="artist-info flex-grow-1 min-w-0">
+                                <h3 class="artist-name h6 mb-2 text-truncate">{{ artist.name }}</h3>
+                                <div class="artist-meta d-flex flex-column gap-1">
+                                    <div class="d-flex gap-2 flex-wrap">
+                                        <span class="badge bg-secondary-subtle text-secondary small">{{ artist.genre.title() if artist.genre else 'No Genre' }}</span>
+                                        <span class="badge bg-info-subtle text-info small">{{ artist.country if artist.country else 'No Country' }}</span>
+                                    </div>
+                                    {% if artist.bio %}
+                                    <p class="artist-bio text-muted small mb-0">{{ artist.bio[:120] }}{% if artist.bio|length > 120 %}…{% endif %}</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </header>
+
+                    <!-- Artist Stats Section -->
+                    <div class="artist-stats p-3">
+                        <div class="row g-2 text-center">
+                            <div class="col-4">
+                                <div class="stat-item">
+                                    <div class="stat-value fw-bold text-primary">{{ artist.tracks|length }}</div>
+                                    <div class="stat-label small text-muted">Tracks</div>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="stat-item">
+                                    <div class="stat-value fw-bold text-success">{{ plays }}</div>
+                                    <div class="stat-label small text-muted">Plays</div>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="stat-item">
+                                    <div class="stat-value fw-bold text-warning">{{ likes }}</div>
+                                    <div class="stat-label small text-muted">Likes</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Artist Actions Section -->
+                    <div class="artist-actions p-3 mt-auto border-top">
+                        <div class="d-grid gap-2">
+                            <div class="row g-2">
+                                <div class="col-6">
+                                    <a href="{{ url_for('artist_details', artist_id=artist.id) }}" class="btn btn-outline-primary btn-sm w-100">
+                                        <i class="fas fa-eye me-1"></i>View
+                                    </a>
+                                </div>
+                                <div class="col-6">
+                                    <a href="{{ url_for('edit_artist', artist_id=artist.id) }}" class="btn btn-outline-secondary btn-sm w-100">
+                                        <i class="fas fa-edit me-1"></i>Edit
+                                    </a>
+                                </div>
+                            </div>
+                            <form method="post"
+                                  action="{{ url_for('delete_artist', artist_id=artist.id) }}"
+                                  onsubmit="return confirm('Delete {{ artist.name }}? This will remove all their tracks.');">
+                                <button type="submit" class="btn btn-outline-danger btn-sm w-100">
+                                    <i class="fas fa-trash me-1"></i>Delete
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </article>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-icon">
+                <i class="fas fa-users-slash"></i>
+            </div>
+            <h3>No artists found</h3>
+            <p>
+                {% if search %}
+                Adjust your search or <a href="{{ url_for('artists') }}">view all artists</a>.
+                {% else %}
+                Start building the catalog by <a href="{{ url_for('create_artist') }}">adding your first artist</a>.
+                {% endif %}
+            </p>
+        </div>
+        {% endif %}
+    </section>
+
+    {% if artists.pages > 1 %}
+    <nav class="pagination-wrapper" aria-label="Artists pagination">
+        <div class="pagination-info">
+            Showing page {{ artists.page }} of {{ artists.pages }}
+        </div>
+        <ul class="pagination">
+            <li class="page-item {% if not artists.has_prev %}disabled{% endif %}">
+                <a class="page-link"
+                   href="{{ url_for('artists', page=artists.prev_num if artists.has_prev else 1, search=search) }}"
+                   aria-label="Previous page">
+                    <i class="fas fa-chevron-left"></i>
+                </a>
+            </li>
+            {% for page_num in artists.iter_pages(left_edge=1, left_current=2, right_current=2, right_edge=1) %}
+                {% if page_num %}
+                <li class="page-item {% if artists.page == page_num %}active{% endif %}">
+                    <a class="page-link" href="{{ url_for('artists', page=page_num, search=search) }}">
+                        {{ page_num }}
+                    </a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link">…</span>
+                </li>
+                {% endif %}
+            {% endfor %}
+            <li class="page-item {% if not artists.has_next %}disabled{% endif %}">
+                <a class="page-link"
+                   href="{{ url_for('artists', page=artists.next_num if artists.has_next else artists.pages, search=search) }}"
+                   aria-label="Next page">
+                    <i class="fas fa-chevron-right"></i>
+                </a>
+            </li>
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+
+<style>
+.artists-page {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 6rem 1.5rem 3rem;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+</style>
+{% endblock %}

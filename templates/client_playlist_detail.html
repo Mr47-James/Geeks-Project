@@ -1,0 +1,773 @@
+{% extends "base.html" %}
+
+{% block title %}{{ playlist.name }} | Harmony{% endblock %}
+
+{% block content %}
+<style>
+    .playlist-header {
+        text-align: center;
+        margin-bottom: 3rem;
+        animation: fadeInUp 0.8s ease;
+    }
+
+    .playlist-artwork {
+        width: 200px;
+        height: 200px;
+        background: var(--primary);
+        border-radius: var(--border-radius);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 2rem;
+        color: white;
+        font-size: 4rem;
+        position: relative;
+        overflow: hidden;
+        animation: pulse 2s infinite;
+    }
+
+    .playlist-artwork::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.2) 50%, transparent 70%);
+        transform: translateX(-100%);
+        transition: transform 0.6s ease;
+    }
+
+    .playlist-artwork:hover::before {
+        transform: translateX(100%);
+    }
+
+    .playlist-title {
+        font-size: 2.5rem;
+        font-weight: 800;
+        color: var(--text-primary);
+        margin-bottom: 0.5rem;
+    }
+
+    .playlist-info {
+        color: var(--text-secondary);
+        font-size: 1.1rem;
+        margin-bottom: 1rem;
+    }
+
+    .playlist-description {
+        color: var(--text-muted);
+        max-width: 600px;
+        margin: 0 auto 2rem;
+        line-height: 1.6;
+    }
+
+    .playlist-meta {
+        display: flex;
+        justify-content: center;
+        gap: 2rem;
+        margin-bottom: 2rem;
+        flex-wrap: wrap;
+    }
+
+    .meta-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: var(--text-muted);
+        font-size: 0.9rem;
+    }
+
+    .playlist-actions {
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+        margin-bottom: 3rem;
+        flex-wrap: wrap;
+    }
+
+    .tracks-section {
+        margin-bottom: 3rem;
+    }
+
+    .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+    }
+
+    .section-title {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .section-title i {
+        color: #667eea;
+    }
+
+    .tracks-list {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .track-item {
+        padding: 1.5rem;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        animation: fadeInUp 0.8s ease var(--delay, 0.6s) both;
+        position: relative;
+        overflow: hidden;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .track-item::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 4px;
+        height: 100%;
+        background: var(--primary);
+        transform: scaleY(0);
+        transition: transform 0.3s ease;
+    }
+
+    .track-item:hover::before {
+        transform: scaleY(1);
+    }
+
+    .track-item:hover {
+        transform: translateY(-2px);
+    }
+
+    .track-position {
+        width: 40px;
+        text-align: center;
+        color: var(--text-muted);
+        font-weight: 600;
+        font-size: 1.1rem;
+    }
+
+    .track-artwork-small {
+        width: 60px;
+        height: 60px;
+        background: var(--secondary);
+        border-radius: var(--border-radius-sm);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.5rem;
+        flex-shrink: 0;
+    }
+
+    .track-info {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .track-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 0.25rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .track-artist {
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .track-meta {
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+        color: var(--text-muted);
+        font-size: 0.85rem;
+        flex-shrink: 0;
+    }
+
+    .track-actions {
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .track-item:hover .track-actions {
+        opacity: 1;
+    }
+
+    .track-action {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        border: none;
+        background: var(--glass-bg);
+        backdrop-filter: var(--glass-backdrop);
+        -webkit-backdrop-filter: var(--glass-backdrop);
+        color: var(--text-primary);
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.8rem;
+    }
+
+    .track-action:hover {
+        transform: scale(1.1);
+        background: var(--primary);
+        color: white;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        animation: fadeInUp 0.8s ease 0.6s both;
+    }
+
+    .empty-icon {
+        width: 100px;
+        height: 100px;
+        background: var(--glass-bg);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 2rem;
+        font-size: 2.5rem;
+        color: var(--text-muted);
+    }
+
+    .empty-title {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 1rem;
+    }
+
+    .empty-message {
+        color: var(--text-secondary);
+        margin-bottom: 2rem;
+        max-width: 500px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    @keyframes pulse {
+        0%, 100% {
+            transform: scale(1);
+        }
+        50% {
+            transform: scale(1.05);
+        }
+    }
+
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @media (max-width: 768px) {
+        .playlist-meta {
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .playlist-actions {
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .track-item {
+            flex-direction: column;
+            text-align: center;
+            gap: 1rem;
+        }
+
+        .track-meta {
+            justify-content: center;
+        }
+
+        .track-actions {
+            opacity: 1;
+        }
+    }
+</style>
+
+<!-- Playlist Header -->
+<div class="playlist-header">
+    <div class="playlist-artwork">
+        <i class="fas fa-list-music"></i>
+    </div>
+    <h1 class="playlist-title">{{ playlist.name }}</h1>
+    <div class="playlist-info">
+        by {{ playlist.user.username if playlist.user else 'Unknown User' }} • {{ playlist_tracks|length }} tracks
+    </div>
+    {% if playlist.description %}
+    <p class="playlist-description">{{ playlist.description }}</p>
+    {% endif %}
+    
+    <div class="playlist-meta">
+        <div class="meta-item">
+            <i class="fas fa-calendar"></i>
+            <span>Created {{ playlist.created_at.strftime('%B %d, %Y') if playlist.created_at else 'Unknown' }}</span>
+        </div>
+        <div class="meta-item">
+            <i class="fas fa-clock"></i>
+            <span>Updated {{ playlist.updated_at.strftime('%B %d, %Y') if playlist.updated_at else 'Unknown' }}</span>
+        </div>
+        <div class="meta-item">
+            {% if playlist.is_public %}
+            <i class="fas fa-globe"></i>
+            <span>Public Playlist</span>
+            {% else %}
+            <i class="fas fa-lock"></i>
+            <span>Private Playlist</span>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="playlist-actions">
+        {% if playlist_tracks %}
+        <button class="btn btn-primary" onclick="playPlaylist()">
+            <i class="fas fa-play"></i>
+            Play All
+        </button>
+        <button class="btn btn-secondary" onclick="shufflePlaylist()">
+            <i class="fas fa-random"></i>
+            Shuffle
+        </button>
+        <button class="btn btn-accent" onclick="addPlaylistToQueue()" title="Add All to Queue (Ctrl+Q)">
+            <i class="fas fa-plus"></i>
+            Queue All
+        </button>
+        {% endif %}
+        {% if is_owner %}
+        <button class="btn btn-accent" onclick="editPlaylist({{ playlist.id }})">
+            <i class="fas fa-edit"></i>
+            Edit
+        </button>
+        {% endif %}
+        <button class="btn btn-outline" onclick="sharePlaylist({{ playlist.id }})">
+            <i class="fas fa-share"></i>
+            Share
+        </button>
+        <a href="{{ url_for('client_my_tracks') }}#playlists" class="btn btn-outline">
+            <i class="fas fa-arrow-left"></i>
+            Back to Playlists
+        </a>
+    </div>
+</div>
+
+<!-- Tracks Section -->
+<div class="tracks-section">
+    <div class="section-header">
+        <h2 class="section-title">
+            <i class="fas fa-music"></i>
+            Tracks
+        </h2>
+        {% if is_owner %}
+        <div class="section-controls">
+            <button class="btn btn-primary" onclick="addTracksToPlaylist()">
+                <i class="fas fa-plus"></i>
+                Add Tracks
+            </button>
+        </div>
+        {% endif %}
+    </div>
+    
+    <div class="glass-card">
+        {% if playlist_tracks %}
+        <div class="tracks-list">
+            {% for track_data in playlist_tracks %}
+            {% set track = track_data[0] %}
+            {% set position = track_data[1] %}
+            {% set added_at = track_data[2] %}
+            <div class="track-item" style="--delay: {{ 0.6 + loop.index * 0.05 }}s;" onclick="playTrack({{ track.id }})">
+                <div class="track-position">{{ position }}</div>
+                <div class="track-artwork-small">
+                    <i class="fas fa-music"></i>
+                </div>
+                <div class="track-info">
+                    <div class="track-title">{{ track.title }}</div>
+                    <div class="track-artist">{{ track.artist.name if track.artist else 'Unknown Artist' }}</div>
+                </div>
+                <div class="track-meta">
+                    {% if track.album %}
+                    <span>{{ track.album }}</span>
+                    {% endif %}
+                    {% if track.duration %}
+                    <span>{{ track.format_duration() if track.format_duration else (track.duration // 60)|string + ':' + (track.duration % 60)|string.zfill(2) }}</span>
+                    {% endif %}
+                    <span>Added {{ added_at.strftime('%b %d') if added_at else 'Unknown' }}</span>
+                </div>
+                <div class="track-actions">
+                    <button class="track-action" onclick="event.stopPropagation(); likeTrack({{ track.id }})" title="Like">
+                        <i class="fas fa-thumbs-up"></i>
+                    </button>
+                    <button class="track-action" onclick="event.stopPropagation(); addToPlaylist({{ track.id }})" title="Add to playlist">
+                        <i class="fas fa-plus"></i>
+                    </button>
+                    {% if is_owner %}
+                    <button class="track-action" onclick="event.stopPropagation(); removeFromPlaylist({{ track.id }})" title="Remove from playlist">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-icon">
+                <i class="fas fa-music"></i>
+            </div>
+            <h3 class="empty-title">No tracks in this playlist</h3>
+            <p class="empty-message">
+                {% if is_owner %}
+                Start adding tracks to build your perfect playlist.
+                {% else %}
+                This playlist doesn't have any tracks yet.
+                {% endif %}
+            </p>
+            {% if is_owner %}
+            <button class="btn btn-primary" onclick="addTracksToPlaylist()">
+                <i class="fas fa-plus"></i>
+                Add Your First Track
+            </button>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+    // Global playlist tracks management
+    let playlistTracks = [];
+    
+    // Initialize playlist tracks data
+    document.addEventListener('DOMContentLoaded', function() {
+        // Collect all tracks in the playlist
+        playlistTracks = Array.from(document.querySelectorAll('.track-item')).map(item => {
+            const trackId = parseInt(item.getAttribute('onclick').match(/playTrack\((\d+)\)/)[1]);
+            const title = item.querySelector('.track-title').textContent;
+            const artist = item.querySelector('.track-artist').textContent;
+            const album = item.querySelector('.track-meta span')?.textContent || '';
+            
+            return {
+                id: trackId,
+                title: title,
+                artist: artist,
+                album: album
+            };
+        });
+    });
+
+    // Play track function with audio player integration
+    async function playTrack(trackId) {
+        try {
+            // Track play activity first
+            const response = await fetch(`/client/track/${trackId}/play`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ duration: 0 })
+            });
+            
+            const data = await response.json();
+            
+            if (data.status === 'success') {
+                // Use the audio player if available
+                if (window.harmonyPlayer) {
+                    // Set current playlist tracks and play the selected track
+                    const trackIndex = playlistTracks.findIndex(t => t.id === trackId);
+                    if (trackIndex !== -1) {
+                        window.harmonyPlayer.setPlaylist(playlistTracks, trackIndex);
+                        await window.harmonyPlayer.loadTrack(trackId, true);
+                        showNotification(`Now playing: ${playlistTracks[trackIndex].title}`, 'success');
+                    } else {
+                        // Single track play
+                        await window.harmonyPlayer.loadTrack(trackId, true);
+                        showNotification('Playing track...', 'success');
+                    }
+                } else {
+                    showNotification('Audio player not ready. Please wait...', 'warning');
+                }
+            } else {
+                showNotification('Error playing track: ' + data.message, 'error');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            showNotification('An error occurred while playing the track', 'error');
+        }
+    }
+
+    // Play entire playlist function
+    async function playPlaylist() {
+        if (playlistTracks.length === 0) {
+            showNotification('No tracks in this playlist', 'warning');
+            return;
+        }
+        
+        if (window.harmonyPlayer) {
+            window.harmonyPlayer.setPlaylist(playlistTracks, 0);
+            await window.harmonyPlayer.loadTrack(playlistTracks[0].id, true);
+            showNotification(`Playing playlist: {{ playlist.name }} (${playlistTracks.length} tracks)`, 'success');
+        } else {
+            showNotification('Audio player not ready', 'error');
+        }
+    }
+
+    // Shuffle playlist function
+    async function shufflePlaylist() {
+        if (playlistTracks.length === 0) {
+            showNotification('No tracks in this playlist', 'warning');
+            return;
+        }
+        
+        if (window.harmonyPlayer) {
+            const shuffledTracks = [...playlistTracks].sort(() => Math.random() - 0.5);
+            window.harmonyPlayer.setPlaylist(shuffledTracks, 0);
+            window.harmonyPlayer.isShuffled = true;
+            window.harmonyPlayer.updateShuffleButton();
+            await window.harmonyPlayer.loadTrack(shuffledTracks[0].id, true);
+            showNotification(`Shuffling playlist: {{ playlist.name }}`, 'success');
+        } else {
+            showNotification('Audio player not ready', 'error');
+        }
+    }
+
+    // Add all playlist tracks to queue
+    function addPlaylistToQueue() {
+        if (playlistTracks.length === 0) {
+            showNotification('No tracks in this playlist', 'warning');
+            return;
+        }
+        
+        if (window.harmonyPlayer) {
+            playlistTracks.forEach(track => {
+                window.harmonyPlayer.addToQueue(track);
+            });
+            showNotification(`Added ${playlistTracks.length} tracks from playlist to queue`, 'success');
+        } else {
+            showNotification('Audio player not ready', 'error');
+        }
+    }
+
+    // Add single track to queue
+    function addToQueue(trackId) {
+        const track = playlistTracks.find(t => t.id === trackId);
+        if (!track) return;
+        
+        if (window.harmonyPlayer) {
+            window.harmonyPlayer.addToQueue(track);
+            showNotification(`Added "${track.title}" to queue`, 'success');
+        } else {
+            showNotification('Audio player not ready', 'error');
+        }
+    }
+
+    // Like track function
+    function likeTrack(trackId) {
+        fetch(`/client/track/${trackId}/like`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                const flashContainer = document.querySelector('.flash-messages');
+                const notification = document.createElement('div');
+                notification.className = 'flash-message success';
+                notification.innerHTML = '<i class="fas fa-thumbs-up"></i> Track liked!';
+                flashContainer.appendChild(notification);
+                setTimeout(() => notification.remove(), 2000);
+            }
+        })
+        .catch(console.error);
+    }
+
+    // Add to playlist function
+    function addToPlaylist(trackId) {
+        const flashContainer = document.querySelector('.flash-messages');
+        const notification = document.createElement('div');
+        notification.className = 'flash-message info';
+        notification.innerHTML = '<i class="fas fa-plus"></i> Add to playlist functionality coming soon!';
+        flashContainer.appendChild(notification);
+        setTimeout(() => notification.remove(), 3000);
+    }
+
+    // Remove from playlist function
+    function removeFromPlaylist(trackId) {
+        if (!confirm('Are you sure you want to remove this track from the playlist?')) {
+            return;
+        }
+        
+        fetch(`/client/playlists/{{ playlist.id }}/remove-track`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ track_id: trackId })
+        })
+        .then(response => response.json())
+        .then(data => {
+            const flashContainer = document.querySelector('.flash-messages');
+            const notification = document.createElement('div');
+            notification.className = data.status === 'success' ? 'flash-message success' : 'flash-message error';
+            notification.innerHTML = `<i class="fas fa-${data.status === 'success' ? 'check' : 'exclamation-triangle'}"></i> ${data.message}`;
+            flashContainer.appendChild(notification);
+            setTimeout(() => notification.remove(), 3000);
+            
+            if (data.status === 'success') {
+                setTimeout(() => location.reload(), 1000);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            const flashContainer = document.querySelector('.flash-messages');
+            const notification = document.createElement('div');
+            notification.className = 'flash-message error';
+            notification.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Error removing track from playlist';
+            flashContainer.appendChild(notification);
+            setTimeout(() => notification.remove(), 3000);
+        });
+    }
+
+    // Edit playlist function
+    function editPlaylist(playlistId) {
+        const name = prompt('Enter new playlist name:', '{{ playlist.name }}');
+        if (!name || !name.trim()) {
+            return;
+        }
+        
+        const description = prompt('Enter new playlist description (optional):', '{{ playlist.description or "" }}') || '';
+        const isPublic = confirm('Make this playlist public?');
+        
+        fetch(`/client/playlists/${playlistId}/edit`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                name: name.trim(),
+                description: description.trim(),
+                is_public: isPublic
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            const flashContainer = document.querySelector('.flash-messages');
+            const notification = document.createElement('div');
+            notification.className = data.status === 'success' ? 'flash-message success' : 'flash-message error';
+            notification.innerHTML = `<i class="fas fa-${data.status === 'success' ? 'check' : 'exclamation-triangle'}"></i> ${data.message}`;
+            flashContainer.appendChild(notification);
+            setTimeout(() => notification.remove(), 3000);
+            
+            if (data.status === 'success') {
+                setTimeout(() => location.reload(), 1000);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            const flashContainer = document.querySelector('.flash-messages');
+            const notification = document.createElement('div');
+            notification.className = 'flash-message error';
+            notification.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Error updating playlist';
+            flashContainer.appendChild(notification);
+            setTimeout(() => notification.remove(), 3000);
+        });
+    }
+
+    // Share playlist function
+    function sharePlaylist(playlistId) {
+        const flashContainer = document.querySelector('.flash-messages');
+        const notification = document.createElement('div');
+        notification.className = 'flash-message info';
+        notification.innerHTML = '<i class="fas fa-share"></i> Share functionality coming soon!';
+        flashContainer.appendChild(notification);
+        setTimeout(() => notification.remove(), 3000);
+    }
+
+    // Add tracks to playlist function
+    function addTracksToPlaylist() {
+        window.location.href = '{{ url_for("client_tracks") }}?add_to_playlist={{ playlist.id }}';
+    }
+
+    // Utility function to show notifications
+    function showNotification(message, type = 'info') {
+        const flashContainer = document.querySelector('.flash-messages');
+        if (!flashContainer) return;
+        
+        const notification = document.createElement('div');
+        notification.className = `flash-message ${type}`;
+        
+        const icon = type === 'success' ? 'check-circle' : 
+                    type === 'error' ? 'exclamation-triangle' : 
+                    type === 'warning' ? 'exclamation-triangle' : 'info-circle';
+        
+        notification.innerHTML = `<i class="fas fa-${icon}"></i> ${message}`;
+        flashContainer.appendChild(notification);
+        
+        // Auto remove after 4 seconds
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.style.animation = 'slideInRight 0.3s ease reverse';
+                setTimeout(() => notification.remove(), 300);
+            }
+        }, 4000);
+    }
+
+    // Keyboard shortcuts
+    document.addEventListener('keydown', function(e) {
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+        
+        if (e.ctrlKey || e.metaKey) {
+            switch(e.key) {
+                case 'p':
+                    e.preventDefault();
+                    playPlaylist();
+                    break;
+                case 's':
+                    e.preventDefault();
+                    shufflePlaylist();
+                    break;
+                case 'q':
+                    e.preventDefault();
+                    addPlaylistToQueue();
+                    break;
+                case 'a':
+                    e.preventDefault();
+                    addTracksToPlaylist();
+                    break;
+            }
+        }
+    });
+</script>
+{% endblock %}

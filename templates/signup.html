@@ -1,0 +1,434 @@
+{% extends "base.html" %}
+
+{% block title %}Sign Up | Harmony{% endblock %}
+
+{% block content %}
+<style>
+    .signup-section {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: calc(100vh - 160px);
+        padding: 2rem 0;
+    }
+
+    .signup-container {
+        width: 100%;
+        max-width: 450px;
+        animation: fadeInUp 0.8s ease;
+    }
+
+    .signup-header {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+
+    .signup-title {
+        font-size: 2.5rem;
+        font-weight: 800;
+        background: var(--primary);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: 0.5rem;
+    }
+
+    .signup-subtitle {
+        color: var(--text-secondary);
+        font-size: 1.1rem;
+    }
+
+    .signup-form {
+        padding: 2.5rem;
+    }
+
+    .form-group {
+        margin-bottom: 1.5rem;
+        position: relative;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 1rem 1.25rem;
+        background: var(--glass-bg);
+        backdrop-filter: var(--glass-backdrop);
+        -webkit-backdrop-filter: var(--glass-backdrop);
+        border: 1px solid var(--glass-border);
+        border-radius: var(--border-radius-sm);
+        color: var(--text-primary);
+        font-size: 1rem;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .form-control:focus {
+        outline: none;
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        transform: translateY(-2px);
+    }
+
+    .form-control::placeholder {
+        color: var(--text-muted);
+    }
+
+    .password-toggle {
+        position: absolute;
+        right: 1rem;
+        top: 2.75rem;
+        background: none;
+        border: none;
+        color: var(--text-muted);
+        cursor: pointer;
+        font-size: 1.1rem;
+        transition: color 0.3s ease;
+    }
+
+    .password-toggle:hover {
+        color: var(--text-primary);
+    }
+
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .signup-button {
+        width: 100%;
+        padding: 1rem;
+        background: var(--primary);
+        color: var(--text-inverse);
+        border: none;
+        border-radius: var(--border-radius-sm);
+        font-size: 1.1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+        margin-bottom: 1.5rem;
+    }
+
+    .signup-button::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+        transition: left 0.5s ease;
+    }
+
+    .signup-button:hover::before {
+        left: 100%;
+    }
+
+    .signup-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+    }
+
+    .divider {
+        text-align: center;
+        margin: 2rem 0;
+        position: relative;
+        color: var(--text-muted);
+        font-size: 0.9rem;
+    }
+
+    .divider::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: var(--glass-border);
+        z-index: 1;
+    }
+
+    .divider span {
+        background: var(--bg-card);
+        padding: 0 1rem;
+        position: relative;
+        z-index: 2;
+    }
+
+    .social-buttons {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .social-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.75rem;
+        background: var(--glass-bg);
+        backdrop-filter: var(--glass-backdrop);
+        -webkit-backdrop-filter: var(--glass-backdrop);
+        border: 1px solid var(--glass-border);
+        border-radius: var(--border-radius-sm);
+        color: var(--text-primary);
+        text-decoration: none;
+        font-weight: 500;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        font-size: 0.9rem;
+    }
+
+    .social-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .social-btn.google {
+        color: #DB4437;
+        border-color: rgba(219, 68, 55, 0.2);
+    }
+
+    .social-btn.facebook {
+        color: #4267B2;
+        border-color: rgba(66, 103, 178, 0.2);
+    }
+
+    .social-btn.apple {
+        color: var(--text-primary);
+        border-color: var(--glass-border);
+    }
+
+    .social-btn i {
+        font-size: 1.2rem;
+    }
+
+    .login-link {
+        text-align: center;
+        color: var(--text-secondary);
+    }
+
+    .login-link a {
+        color: #667eea;
+        text-decoration: none;
+        font-weight: 600;
+        transition: color 0.3s ease;
+    }
+
+    .login-link a:hover {
+        color: #5a67d8;
+    }
+
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @media (max-width: 768px) {
+        .signup-container {
+            margin: 0 1rem;
+        }
+
+        .signup-form {
+            padding: 2rem 1.5rem;
+        }
+
+        .form-row {
+            grid-template-columns: 1fr;
+        }
+
+        .social-buttons {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<section class="signup-section">
+    <div class="signup-container">
+        <div class="signup-header">
+            <h1 class="signup-title">Join Harmony</h1>
+            <p class="signup-subtitle">Create your account and start discovering music</p>
+        </div>
+
+        <div class="glass-card signup-form">
+            <form method="POST" action="{{ url_for('signup') }}">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="flash-message {{ 'error' if category == 'error' else 'success' }}" onclick="this.remove()">
+                                <i class="fas fa-{{ 'times-circle' if category == 'error' else 'check-circle' }}"></i>
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="username">Username</label>
+                        <input type="text" id="username" name="username" class="form-control" placeholder="Enter username" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="email">Email Address</label>
+                        <input type="email" id="email" name="email" class="form-control" placeholder="Enter email" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="region">Region (Optional)</label>
+                    <select id="region" name="region" class="form-control">
+                        <option value="">Select your region</option>
+                        <option value="North America">North America</option>
+                        <option value="South America">South America</option>
+                        <option value="Europe">Europe</option>
+                        <option value="Asia">Asia</option>
+                        <option value="Africa">Africa</option>
+                        <option value="Oceania">Oceania</option>
+                    </select>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <input type="password" id="password" name="password" class="form-control" placeholder="Enter password" required>
+                        <button type="button" class="password-toggle" id="togglePassword">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                    <div class="form-group">
+                        <label for="confirm_password">Confirm Password</label>
+                        <input type="password" id="confirm_password" name="confirm_password" class="form-control" placeholder="Confirm password" required>
+                        <button type="button" class="password-toggle" id="toggleConfirmPassword">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <button type="submit" class="signup-button">
+                    <i class="fas fa-user-plus"></i>
+                    Create Account
+                </button>
+
+                <div class="divider">
+                    <span>Or continue with</span>
+                </div>
+
+                <div class="social-buttons">
+                    <a href="#" class="social-btn google">
+                        <i class="fab fa-google"></i>
+                    </a>
+                    <a href="#" class="social-btn facebook">
+                        <i class="fab fa-facebook-f"></i>
+                    </a>
+                    <a href="#" class="social-btn apple">
+                        <i class="fab fa-apple"></i>
+                    </a>
+                </div>
+
+                <div class="login-link">
+                    Already have an account? <a href="{{ url_for('login') }}">Sign in here</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</section>
+
+<script>
+    // Toggle password visibility
+    function setupPasswordToggle(inputId, toggleId) {
+        const passwordInput = document.getElementById(inputId);
+        const toggleButton = document.getElementById(toggleId);
+        const icon = toggleButton.querySelector('i');
+
+        toggleButton.addEventListener('click', function() {
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                passwordInput.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        });
+    }
+
+    setupPasswordToggle('password', 'togglePassword');
+    setupPasswordToggle('confirm_password', 'toggleConfirmPassword');
+
+    // Social login buttons
+    document.querySelectorAll('.social-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            const provider = this.classList.contains('google') ? 'Google' :
+                           this.classList.contains('facebook') ? 'Facebook' : 'Apple';
+
+            // Show a nice notification instead of alert
+            const flashContainer = document.querySelector('.flash-messages');
+            const notification = document.createElement('div');
+            notification.className = 'flash-message info';
+            notification.innerHTML = `<i class="fas fa-info-circle"></i> ${provider} signup integration coming soon!`;
+            flashContainer.appendChild(notification);
+
+            // Auto-remove after 3 seconds
+            setTimeout(() => notification.remove(), 3000);
+        });
+    });
+
+    // Add loading state to signup button
+    document.querySelector('form').addEventListener('submit', function() {
+        const button = this.querySelector('.signup-button');
+        const originalText = button.innerHTML;
+        button.innerHTML = '<span class="loading"></span> Creating account...';
+        button.disabled = true;
+
+        // Re-enable if form submission fails (fallback)
+        setTimeout(() => {
+            button.innerHTML = originalText;
+            button.disabled = false;
+        }, 5000);
+    });
+
+    // Form validation
+    document.querySelector('form').addEventListener('submit', function(e) {
+        const password = document.getElementById('password').value;
+        const confirmPassword = document.getElementById('confirm_password').value;
+
+        if (password !== confirmPassword) {
+            e.preventDefault();
+            const flashContainer = document.querySelector('.flash-messages');
+            const notification = document.createElement('div');
+            notification.className = 'flash-message error';
+            notification.innerHTML = '<i class="fas fa-times-circle"></i> Passwords do not match!';
+            flashContainer.appendChild(notification);
+            setTimeout(() => notification.remove(), 3000);
+            return;
+        }
+
+        if (password.length < 6) {
+            e.preventDefault();
+            const flashContainer = document.querySelector('.flash-messages');
+            const notification = document.createElement('div');
+            notification.className = 'flash-message error';
+            notification.innerHTML = '<i class="fas fa-times-circle"></i> Password must be at least 6 characters long!';
+            flashContainer.appendChild(notification);
+            setTimeout(() => notification.remove(), 3000);
+            return;
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,1130 @@
+{% extends "base.html" %}
+
+{% block title %}Browse Music | Harmony{% endblock %}
+
+{% block content %}
+<style>
+    .browse-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+        animation: fadeInUp 0.8s ease;
+    }
+
+    .browse-title {
+        font-size: 2.5rem;
+        font-weight: 800;
+        background: var(--primary);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .quick-actions {
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+    }
+
+    .quick-actions .btn {
+        padding: 0.75rem 1.5rem;
+        font-size: 0.9rem;
+        font-weight: 600;
+        border-radius: var(--border-radius-sm);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .quick-actions .btn::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+        transition: left 0.5s ease;
+    }
+
+    .quick-actions .btn:hover::before {
+        left: 100%;
+    }
+
+    .quick-actions .btn:hover {
+        transform: translateY(-2px) scale(1.05);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+    }
+
+    .quick-actions .btn:active {
+        transform: translateY(0) scale(0.98);
+    }
+
+    .search-section {
+        padding: 2rem;
+        margin-bottom: 2rem;
+        animation: fadeInUp 0.8s ease 0.2s both;
+    }
+
+    .search-form {
+        display: grid;
+        grid-template-columns: 2fr 1fr auto;
+        gap: 1rem;
+        align-items: end;
+    }
+
+    .search-input {
+        padding: 1rem 1.25rem;
+        background: var(--glass-bg);
+        backdrop-filter: var(--glass-backdrop);
+        -webkit-backdrop-filter: var(--glass-backdrop);
+        border: 1px solid var(--glass-border);
+        border-radius: var(--border-radius-sm);
+        color: var(--text-primary);
+        font-size: 1rem;
+        transition: all 0.3s ease;
+    }
+
+    .search-input:focus {
+        outline: none;
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        transform: translateY(-2px);
+    }
+
+    .search-input::placeholder {
+        color: var(--text-muted);
+    }
+
+    .genre-select {
+        padding: 1rem 1.25rem;
+        background: var(--glass-bg);
+        backdrop-filter: var(--glass-backdrop);
+        -webkit-backdrop-filter: var(--glass-backdrop);
+        border: 1px solid var(--glass-border);
+        border-radius: var(--border-radius-sm);
+        color: var(--text-primary);
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .genre-select:focus {
+        outline: none;
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .search-button {
+        padding: 1rem 2rem;
+        background: var(--primary);
+        color: white;
+        border: none;
+        border-radius: var(--border-radius-sm);
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .search-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+    }
+
+    .tracks-stats {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        padding: 1rem 0;
+        border-bottom: 1px solid var(--glass-border);
+        animation: fadeInUp 0.8s ease 0.4s both;
+    }
+
+    .tracks-count {
+        color: var(--text-secondary);
+        font-weight: 500;
+    }
+
+    .view-toggle {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .view-btn {
+        width: 40px;
+        height: 40px;
+        border: none;
+        background: var(--glass-bg);
+        backdrop-filter: var(--glass-backdrop);
+        -webkit-backdrop-filter: var(--glass-backdrop);
+        border: 1px solid var(--glass-border);
+        border-radius: var(--border-radius-sm);
+        color: var(--text-primary);
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .view-btn.active,
+    .view-btn:hover {
+        background: var(--primary);
+        color: white;
+        transform: scale(1.05);
+    }
+
+    .tracks-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .tracks-list {
+        display: grid;
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .track-card {
+        padding: 1.5rem;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        animation: fadeInUp 0.8s ease var(--delay, 0.6s) both;
+        position: relative;
+        overflow: hidden;
+        cursor: pointer;
+    }
+
+    .track-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 4px;
+        height: 100%;
+        background: var(--primary);
+        transform: scaleY(0);
+        transition: transform 0.3s ease;
+    }
+
+    .track-card:hover::before {
+        transform: scaleY(1);
+    }
+
+    .track-card:hover {
+        transform: translateY(-5px) scale(1.02);
+    }
+
+    .track-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 1rem;
+    }
+
+    .track-artwork {
+        width: 60px;
+        height: 60px;
+        background: var(--gradient, var(--secondary));
+        border-radius: var(--border-radius-sm);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.5rem;
+        margin-bottom: 1rem;
+        position: relative;
+        overflow: hidden;
+        transition: transform 0.3s ease;
+    }
+
+    .track-artwork::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.2) 50%, transparent 70%);
+        transform: translateX(-100%);
+        transition: transform 0.6s ease;
+    }
+
+    .track-card:hover .track-artwork::before {
+        transform: translateX(100%);
+    }
+
+    .track-card:hover .track-artwork {
+        transform: scale(1.1) rotate(5deg);
+    }
+
+    .track-info {
+        flex: 1;
+    }
+
+    .track-title {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 0.25rem;
+    }
+
+    .track-artist {
+        color: var(--text-secondary);
+        font-weight: 500;
+        margin-bottom: 0.5rem;
+    }
+
+    .track-meta {
+        display: flex;
+        gap: 1rem;
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        flex-wrap: wrap;
+        margin-bottom: 1rem;
+    }
+
+    .track-meta-item {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+
+    .track-actions {
+        display: flex;
+        gap: 0.5rem;
+        justify-content: center;
+        margin-top: 1rem;
+    }
+
+    .track-action {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        border: none;
+        background: var(--glass-bg);
+        backdrop-filter: var(--glass-backdrop);
+        -webkit-backdrop-filter: var(--glass-backdrop);
+        color: var(--text-primary);
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.9rem;
+    }
+
+    .track-action:hover {
+        transform: scale(1.1);
+        background: var(--primary);
+        color: white;
+    }
+
+    .track-action.liked {
+        background: var(--success);
+        color: white;
+    }
+
+    .track-action.bookmarked {
+        background: var(--warning);
+        color: white;
+    }
+
+    .track-stats {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid var(--glass-border);
+        font-size: 0.85rem;
+        color: var(--text-muted);
+    }
+
+    .track-stat {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+
+    /* List View Styles */
+    .track-list-item {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 1rem 1.5rem;
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+
+    .track-list-item:hover {
+        transform: translateX(8px);
+    }
+
+    .track-list-artwork {
+        width: 50px;
+        height: 50px;
+        background: var(--gradient, var(--secondary));
+        border-radius: var(--border-radius-sm);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.2rem;
+        flex-shrink: 0;
+    }
+
+    .track-list-info {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .track-list-title {
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 0.25rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .track-list-artist {
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .track-list-meta {
+        display: flex;
+        gap: 2rem;
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        min-width: 200px;
+    }
+
+    .track-list-actions {
+        display: flex;
+        gap: 0.5rem;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .track-list-item:hover .track-list-actions {
+        opacity: 1;
+    }
+
+    .pagination {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 1rem;
+        margin-top: 2rem;
+        animation: fadeInUp 0.8s ease 0.8s both;
+    }
+
+    .pagination-info {
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+    }
+
+    .pagination-controls {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .pagination-btn {
+        padding: 0.5rem 1rem;
+        background: var(--glass-bg);
+        backdrop-filter: var(--glass-backdrop);
+        -webkit-backdrop-filter: var(--glass-backdrop);
+        border: 1px solid var(--glass-border);
+        border-radius: var(--border-radius-sm);
+        color: var(--text-primary);
+        text-decoration: none;
+        transition: all 0.3s ease;
+        font-weight: 500;
+    }
+
+    .pagination-btn:hover {
+        background: var(--primary);
+        color: white;
+        transform: translateY(-2px);
+    }
+
+    .pagination-btn.active {
+        background: var(--primary);
+        color: white;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        animation: fadeInUp 0.8s ease 0.6s both;
+    }
+
+    .empty-icon {
+        width: 80px;
+        height: 80px;
+        background: var(--glass-bg);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1.5rem;
+        font-size: 2rem;
+        color: var(--text-muted);
+    }
+
+    .empty-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 0.5rem;
+    }
+
+    .empty-message {
+        color: var(--text-secondary);
+        margin-bottom: 2rem;
+    }
+
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @media (max-width: 768px) {
+        .browse-header {
+            flex-direction: column;
+            gap: 1rem;
+            align-items: stretch;
+        }
+
+        .search-form {
+            grid-template-columns: 1fr;
+            gap: 1rem;
+        }
+
+        .tracks-stats {
+            flex-direction: column;
+            gap: 1rem;
+            align-items: stretch;
+        }
+
+        .tracks-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .track-list-meta {
+            display: none;
+        }
+    }
+</style>
+
+<!-- Browse Header -->
+<div class="browse-header">
+    <h1 class="browse-title">Browse Music</h1>
+    <div class="quick-actions">
+        <button class="btn btn-primary" onclick="playAllTracks()" title="Play All Tracks (Ctrl+P)">
+            <i class="fas fa-play"></i>
+            Play All
+        </button>
+        <button class="btn btn-secondary" onclick="shuffleAllTracks()" title="Shuffle All Tracks (Ctrl+S)">
+            <i class="fas fa-random"></i>
+            Shuffle
+        </button>
+        <button class="btn btn-accent" onclick="addAllToQueue()" title="Add All to Queue (Ctrl+Q)">
+            <i class="fas fa-plus"></i>
+            Queue All
+        </button>
+    </div>
+</div>
+
+<!-- Search Section -->
+<div class="glass-card search-section">
+    <form method="GET" action="{{ url_for('client_tracks') }}" class="search-form">
+        <input type="text" name="search" value="{{ search }}" placeholder="Search for tracks, artists, or albums..." class="search-input">
+        <select name="genre" class="genre-select">
+            <option value="">All Genres</option>
+            {% for genre in genres %}
+            <option value="{{ genre }}" {{ 'selected' if genre == genre_filter }}>{{ genre }}</option>
+            {% endfor %}
+        </select>
+        <button type="submit" class="search-button">
+            <i class="fas fa-search"></i>
+            Search
+        </button>
+    </form>
+</div>
+
+<!-- Tracks Stats and View Toggle -->
+<div class="tracks-stats">
+    <div class="tracks-count">
+        Showing {{ tracks.items|length }} of {{ tracks.total }} tracks
+        {% if search or genre_filter %}
+        (filtered)
+        {% endif %}
+    </div>
+    <div class="view-toggle">
+        <button class="view-btn active" onclick="toggleView('grid')" title="Grid View">
+            <i class="fas fa-th"></i>
+        </button>
+        <button class="view-btn" onclick="toggleView('list')" title="List View">
+            <i class="fas fa-list"></i>
+        </button>
+    </div>
+</div>
+
+<!-- Tracks Grid View -->
+<div class="tracks-grid" id="gridView">
+    {% for track in tracks.items %}
+    <div class="glass-card track-card" style="--delay: {{ 0.6 + loop.index * 0.05 }}s" onclick="viewTrackDetails({{ track.id }})">
+        <div class="track-artwork" style="--gradient: var(--{{ ['primary', 'secondary', 'accent'][loop.index % 3] }});">
+            <i class="fas fa-music"></i>
+        </div>
+        <div class="track-info">
+            <h3 class="track-title">{{ track.title }}</h3>
+            <div class="track-artist">{{ track.artist.name if track.artist else 'Unknown Artist' }}</div>
+            <div class="track-meta">
+                {% if track.album %}
+                <div class="track-meta-item">
+                    <i class="fas fa-compact-disc"></i>
+                    <span>{{ track.album }}</span>
+                </div>
+                {% endif %}
+                {% if track.genre %}
+                <div class="track-meta-item">
+                    <i class="fas fa-tag"></i>
+                    <span>{{ track.genre }}</span>
+                </div>
+                {% endif %}
+                {% if track.duration %}
+                <div class="track-meta-item">
+                    <i class="fas fa-clock"></i>
+                    <span>{{ track.format_duration() }}</span>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        <div class="track-actions">
+            <button class="track-action" onclick="event.stopPropagation(); likeTrack({{ track.id }})" title="Like">
+                <i class="fas fa-thumbs-up"></i>
+            </button>
+            <button class="track-action" onclick="event.stopPropagation(); toggleBookmark({{ track.id }})" title="Bookmark">
+                <i class="fas fa-heart"></i>
+            </button>
+            <button class="track-action" onclick="event.stopPropagation(); addToPlaylist({{ track.id }})" title="Add to Playlist">
+                <i class="fas fa-plus"></i>
+            </button>
+            <button class="track-action" onclick="event.stopPropagation(); viewTrackDetails({{ track.id }})" title="Details">
+                <i class="fas fa-info"></i>
+            </button>
+        </div>
+        <div class="track-stats">
+            <div class="track-stat">
+                <i class="fas fa-play"></i>
+                <span>{{ track.play_count }}</span>
+            </div>
+            <div class="track-stat">
+                <i class="fas fa-heart"></i>
+                <span>{{ track.like_count }}</span>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Tracks List View -->
+<div class="tracks-list" id="listView" style="display: none;">
+    {% for track in tracks.items %}
+    <div class="glass-card track-list-item" style="--delay: {{ 0.6 + loop.index * 0.05 }}s" onclick="viewTrackDetails({{ track.id }})">
+        <div class="track-list-artwork" style="--gradient: var(--{{ ['primary', 'secondary', 'accent'][loop.index % 3] }});">
+            <i class="fas fa-music"></i>
+        </div>
+        <div class="track-list-info">
+            <div class="track-list-title">{{ track.title }}</div>
+            <div class="track-list-artist">{{ track.artist.name if track.artist else 'Unknown Artist' }}</div>
+        </div>
+        <div class="track-list-meta">
+            {% if track.album %}
+            <span>{{ track.album }}</span>
+            {% endif %}
+            {% if track.duration %}
+            <span>{{ track.format_duration() }}</span>
+            {% endif %}
+        </div>
+        <div class="track-list-actions">
+            <button class="track-action" onclick="event.stopPropagation(); likeTrack({{ track.id }})" title="Like">
+                <i class="fas fa-thumbs-up"></i>
+            </button>
+            <button class="track-action" onclick="event.stopPropagation(); toggleBookmark({{ track.id }})" title="Bookmark">
+                <i class="fas fa-heart"></i>
+            </button>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Empty State -->
+{% if not tracks.items %}
+<div class="empty-state">
+    <div class="empty-icon">
+        <i class="fas fa-search"></i>
+    </div>
+    <h3 class="empty-title">No tracks found</h3>
+    <p class="empty-message">
+        {% if search or genre_filter %}
+        Try adjusting your search criteria or browse all music.
+        {% else %}
+        No music available at the moment.
+        {% endif %}
+    </p>
+    {% if search or genre_filter %}
+    <a href="{{ url_for('client_tracks') }}" class="btn btn-primary">
+        <i class="fas fa-music"></i>
+        Browse All Music
+    </a>
+    {% endif %}
+</div>
+{% endif %}
+
+<!-- Pagination -->
+{% if tracks.pages > 1 %}
+<div class="pagination">
+    <div class="pagination-info">
+        Page {{ tracks.page }} of {{ tracks.pages }}
+    </div>
+    <div class="pagination-controls">
+        {% if tracks.has_prev %}
+        <a href="{{ url_for('client_tracks', page=tracks.prev_num, search=search, genre=genre_filter) }}" class="pagination-btn">
+            <i class="fas fa-chevron-left"></i>
+        </a>
+        {% endif %}
+        
+        {% for page_num in tracks.iter_pages() %}
+        {% if page_num %}
+        {% if page_num != tracks.page %}
+        <a href="{{ url_for('client_tracks', page=page_num, search=search, genre=genre_filter) }}" class="pagination-btn">{{ page_num }}</a>
+        {% else %}
+        <span class="pagination-btn active">{{ page_num }}</span>
+        {% endif %}
+        {% else %}
+        <span class="pagination-btn">…</span>
+        {% endif %}
+        {% endfor %}
+        
+        {% if tracks.has_next %}
+        <a href="{{ url_for('client_tracks', page=tracks.next_num, search=search, genre=genre_filter) }}" class="pagination-btn">
+            <i class="fas fa-chevron-right"></i>
+        </a>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
+<script>
+    // View toggle functionality
+    function toggleView(viewType) {
+        const gridView = document.getElementById('gridView');
+        const listView = document.getElementById('listView');
+        const gridBtn = document.querySelector('.view-btn:first-child');
+        const listBtn = document.querySelector('.view-btn:last-child');
+        
+        if (viewType === 'grid') {
+            gridView.style.display = 'grid';
+            listView.style.display = 'none';
+            gridBtn.classList.add('active');
+            listBtn.classList.remove('active');
+            localStorage.setItem('viewType', 'grid');
+        } else {
+            gridView.style.display = 'none';
+            listView.style.display = 'grid';
+            gridBtn.classList.remove('active');
+            listBtn.classList.add('active');
+            localStorage.setItem('viewType', 'list');
+        }
+    }
+
+    // Load saved view type
+    document.addEventListener('DOMContentLoaded', function() {
+        const savedView = localStorage.getItem('viewType') || 'grid';
+        toggleView(savedView);
+    });
+
+    // Global track management
+    let currentTracks = [];
+    
+    // Initialize tracks data
+    document.addEventListener('DOMContentLoaded', function() {
+        // Collect all tracks on the page
+        currentTracks = Array.from(document.querySelectorAll('.track-card, .track-list-item')).map(card => {
+            const trackId = parseInt(card.getAttribute('onclick').match(/playTrack\((\d+)\)/)[1]);
+            const title = card.querySelector('.track-title, .track-list-title').textContent;
+            const artist = card.querySelector('.track-artist, .track-list-artist').textContent;
+            const album = card.querySelector('.track-meta-item span')?.textContent || '';
+            
+            return {
+                id: trackId,
+                title: title,
+                artist: artist,
+                album: album
+            };
+        });
+    });
+
+    // Play track function with audio player integration
+    async function playTrack(trackId) {
+        try {
+            // Track play activity first
+            const response = await fetch(`/client/track/${trackId}/play`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ duration: 0 })
+            });
+            
+            const data = await response.json();
+            
+            if (data.status === 'success') {
+                // Use the audio player if available
+                if (window.harmonyPlayer) {
+                    // Set current playlist and play the selected track
+                    const trackIndex = currentTracks.findIndex(t => t.id === trackId);
+                    if (trackIndex !== -1) {
+                        window.harmonyPlayer.setPlaylist(currentTracks, trackIndex);
+                        await window.harmonyPlayer.loadTrack(trackId, true);
+                        showNotification(`Now playing: ${currentTracks[trackIndex].title}`, 'success');
+                    } else {
+                        // Single track play
+                        await window.harmonyPlayer.loadTrack(trackId, true);
+                        showNotification('Playing track...', 'success');
+                    }
+                } else {
+                    showNotification('Audio player not ready. Please wait...', 'warning');
+                }
+            } else {
+                showNotification('Error playing track: ' + data.message, 'error');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            showNotification('An error occurred while playing the track', 'error');
+        }
+    }
+
+    // Play all tracks
+    async function playAllTracks() {
+        if (currentTracks.length === 0) return;
+        
+        if (window.harmonyPlayer) {
+            window.harmonyPlayer.setPlaylist(currentTracks, 0);
+            await window.harmonyPlayer.loadTrack(currentTracks[0].id, true);
+            showNotification(`Playing all ${currentTracks.length} tracks`, 'success');
+        } else {
+            showNotification('Audio player not ready', 'error');
+        }
+    }
+
+    // Shuffle all tracks
+    async function shuffleAllTracks() {
+        if (currentTracks.length === 0) return;
+        
+        if (window.harmonyPlayer) {
+            const shuffledTracks = [...currentTracks].sort(() => Math.random() - 0.5);
+            window.harmonyPlayer.setPlaylist(shuffledTracks, 0);
+            window.harmonyPlayer.isShuffled = true;
+            window.harmonyPlayer.updateShuffleButton();
+            await window.harmonyPlayer.loadTrack(shuffledTracks[0].id, true);
+            showNotification('Shuffling all tracks', 'success');
+        } else {
+            showNotification('Audio player not ready', 'error');
+        }
+    }
+
+    // Add all tracks to queue
+    function addAllToQueue() {
+        if (currentTracks.length === 0) return;
+        
+        if (window.harmonyPlayer) {
+            currentTracks.forEach(track => {
+                window.harmonyPlayer.addToQueue(track);
+            });
+            showNotification(`Added ${currentTracks.length} tracks to queue`, 'success');
+        } else {
+            showNotification('Audio player not ready', 'error');
+        }
+    }
+
+    // Add single track to queue
+    function addToQueue(trackId) {
+        const track = currentTracks.find(t => t.id === trackId);
+        if (!track) return;
+        
+        if (window.harmonyPlayer) {
+            window.harmonyPlayer.addToQueue(track);
+            showNotification(`Added "${track.title}" to queue`, 'success');
+        } else {
+            showNotification('Audio player not ready', 'error');
+        }
+    }
+
+    // Like track function
+    function likeTrack(trackId) {
+        fetch(`/client/track/${trackId}/like`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                const flashContainer = document.querySelector('.flash-messages');
+                const notification = document.createElement('div');
+                notification.className = 'flash-message success';
+                notification.innerHTML = '<i class="fas fa-thumbs-up"></i> Track liked!';
+                flashContainer.appendChild(notification);
+                setTimeout(() => notification.remove(), 2000);
+            }
+        })
+        .catch(console.error);
+    }
+
+    // Toggle bookmark function
+    function toggleBookmark(trackId) {
+        fetch(`/client/track/${trackId}/bookmark`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                const flashContainer = document.querySelector('.flash-messages');
+                const notification = document.createElement('div');
+                notification.className = 'flash-message success';
+                notification.innerHTML = `<i class="fas fa-heart"></i> ${data.bookmarked ? 'Added to' : 'Removed from'} favorites!`;
+                flashContainer.appendChild(notification);
+                setTimeout(() => notification.remove(), 2000);
+            }
+        })
+        .catch(console.error);
+    }
+
+    // Add to playlist function
+    function addToPlaylist(trackId) {
+        // First, get user's playlists
+        fetch('/api/playlists')
+        .then(response => response.json())
+        .then(playlists => {
+            if (playlists.length === 0) {
+                const createNew = confirm('You don\'t have any playlists yet. Would you like to create one?');
+                if (createNew) {
+                    createPlaylistAndAdd(trackId);
+                }
+                return;
+            }
+            
+            // Show playlist selection
+            let playlistOptions = playlists.map(p => `${p.id}: ${p.name} (${p.track_count} tracks)`).join('\n');
+            let selectedPlaylist = prompt(`Select a playlist by entering its number:\n\n${playlistOptions}\n\nOr enter 'new' to create a new playlist:`);
+            
+            if (!selectedPlaylist) return;
+            
+            if (selectedPlaylist.toLowerCase() === 'new') {
+                createPlaylistAndAdd(trackId);
+                return;
+            }
+            
+            const playlistId = parseInt(selectedPlaylist);
+            const playlist = playlists.find(p => p.id === playlistId);
+            
+            if (!playlist) {
+                alert('Invalid playlist selection.');
+                return;
+            }
+            
+            // Add track to selected playlist
+            fetch(`/client/playlists/${playlistId}/add-track`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ track_id: trackId })
+            })
+            .then(response => response.json())
+            .then(data => {
+                const flashContainer = document.querySelector('.flash-messages');
+                const notification = document.createElement('div');
+                notification.className = data.status === 'success' ? 'flash-message success' : 'flash-message error';
+                notification.innerHTML = `<i class="fas fa-${data.status === 'success' ? 'check' : 'exclamation-triangle'}"></i> ${data.message}`;
+                flashContainer.appendChild(notification);
+                setTimeout(() => notification.remove(), 3000);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                const flashContainer = document.querySelector('.flash-messages');
+                const notification = document.createElement('div');
+                notification.className = 'flash-message error';
+                notification.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Error adding track to playlist';
+                flashContainer.appendChild(notification);
+                setTimeout(() => notification.remove(), 3000);
+            });
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            const flashContainer = document.querySelector('.flash-messages');
+            const notification = document.createElement('div');
+            notification.className = 'flash-message error';
+            notification.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Error loading playlists';
+            flashContainer.appendChild(notification);
+            setTimeout(() => notification.remove(), 3000);
+        });
+    }
+
+    // Create playlist and add track
+    function createPlaylistAndAdd(trackId) {
+        const name = prompt('Enter playlist name:');
+        if (!name || !name.trim()) {
+            return;
+        }
+        
+        const description = prompt('Enter playlist description (optional):') || '';
+        const isPublic = confirm('Make this playlist public?');
+        
+        fetch('/client/playlists/create', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                name: name.trim(),
+                description: description.trim(),
+                is_public: isPublic
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                // Add track to the newly created playlist
+                fetch(`/client/playlists/${data.playlist.id}/add-track`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ track_id: trackId })
+                })
+                .then(response => response.json())
+                .then(addData => {
+                    const flashContainer = document.querySelector('.flash-messages');
+                    const notification = document.createElement('div');
+                    notification.className = addData.status === 'success' ? 'flash-message success' : 'flash-message error';
+                    notification.innerHTML = `<i class="fas fa-${addData.status === 'success' ? 'check' : 'exclamation-triangle'}"></i> ${addData.message}`;
+                    flashContainer.appendChild(notification);
+                    setTimeout(() => notification.remove(), 3000);
+                });
+            } else {
+                const flashContainer = document.querySelector('.flash-messages');
+                const notification = document.createElement('div');
+                notification.className = 'flash-message error';
+                notification.innerHTML = `<i class="fas fa-exclamation-triangle"></i> ${data.message}`;
+                flashContainer.appendChild(notification);
+                setTimeout(() => notification.remove(), 3000);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            const flashContainer = document.querySelector('.flash-messages');
+            const notification = document.createElement('div');
+            notification.className = 'flash-message error';
+            notification.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Error creating playlist';
+            flashContainer.appendChild(notification);
+            setTimeout(() => notification.remove(), 3000);
+        });
+    }
+
+    // View track details
+    function viewTrackDetails(trackId) {
+        window.location.href = `/client/track/${trackId}`;
+    }
+
+    // Auto-submit search form on input
+    let searchTimeout;
+    document.querySelector('.search-input').addEventListener('input', function() {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            this.form.submit();
+        }, 500);
+    });
+
+    // Utility function to show notifications
+    function showNotification(message, type = 'info') {
+        const flashContainer = document.querySelector('.flash-messages');
+        if (!flashContainer) return;
+        
+        const notification = document.createElement('div');
+        notification.className = `flash-message ${type}`;
+        
+        const icon = type === 'success' ? 'check-circle' : 
+                    type === 'error' ? 'exclamation-triangle' : 
+                    type === 'warning' ? 'exclamation-triangle' : 'info-circle';
+        
+        notification.innerHTML = `<i class="fas fa-${icon}"></i> ${message}`;
+        flashContainer.appendChild(notification);
+        
+        // Auto remove after 4 seconds
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.style.animation = 'slideInRight 0.3s ease reverse';
+                setTimeout(() => notification.remove(), 300);
+            }
+        }, 4000);
+    }
+
+    // Keyboard shortcuts
+    document.addEventListener('keydown', function(e) {
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+        
+        if (e.ctrlKey || e.metaKey) {
+            switch(e.key) {
+                case 'f':
+                    e.preventDefault();
+                    document.querySelector('.search-input').focus();
+                    break;
+                case '1':
+                    e.preventDefault();
+                    toggleView('grid');
+                    break;
+                case '2':
+                    e.preventDefault();
+                    toggleView('list');
+                    break;
+                case 'p':
+                    e.preventDefault();
+                    playAllTracks();
+                    break;
+                case 's':
+                    e.preventDefault();
+                    shuffleAllTracks();
+                    break;
+                case 'q':
+                    e.preventDefault();
+                    addAllToQueue();
+                    break;
+            }
+        }
+    });
+</script>
+{% endblock %}
