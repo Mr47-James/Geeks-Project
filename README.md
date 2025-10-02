@@ -7,6 +7,10 @@ A comprehensive music streaming web application built with Flask, featuring user
 Atlantes is a full-featured music streaming platform that allows users to upload, organize, and stream audio files. The application supports user roles (consumers and technicians), provides ML-based music recommendations, and includes features like playlists, bookmarks, and social interactions.
 
 ![Shot1](Screenshots/Screenshot%20from%202025-09-29%2000-42-19.png)
+![Shot1](Screenshots/Screenshot%20from%202025-09-29%2000-42-20.png)
+![Shot1](Screenshots/Screenshot%20from%202025-09-29%2000-42-27.png)
+![Shot1](Screenshots/Screenshot%20from%202025-09-29%2000-42-31.png)
+
 
 
 ## Technologies Used
