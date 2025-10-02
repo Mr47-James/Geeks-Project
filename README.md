@@ -9,7 +9,7 @@ Atlantes is a full-featured music streaming platform that allows users to upload
 ![Shot1](Screenshots/Screenshot%20from%202025-09-29%2000-42-19.png)
 ![Shot1](Screenshots/Screenshot%20from%202025-09-29%2000-42-20.png)
 ![Shot1](Screenshots/Screenshot%20from%202025-09-29%2000-42-27.png)
-![Shot1](Screenshots/Screenshot%20from%202025-09-29%2000-42-31.png)
+![Shot1](Screenshots/Screenshot%20from%202025-09-29%2000-47-31.png)
 
 
 
